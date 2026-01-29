@@ -36,7 +36,7 @@ function UserJoinContent() {
     }
 
     try {
-      const res = await fetch(`${API_URL}/participants/register`, {
+      const res = await fetch(`${API_URL}/participants/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
