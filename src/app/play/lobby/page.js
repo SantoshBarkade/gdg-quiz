@@ -1,53 +1,20 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import Footer from "@/components/Footer";
-
-// --- CONFIGURATION ---
-const CONFIG = {
-  terminalMessages: [
-    "$ Initializing session lobby...",
-    "$ Loading participant data...",
-    "$ Connecting to server...",
-    "$ Server connection established ✓",
-    "$ Preparing interactive environment...",
-    "$ All systems ready ✓",
-    "$ Welcome to GDG Quiz Session!",
-  ],
-  typingSpeed: 30,
-  messageDelay: 400,
-};
 
 export default function LobbyPage() {
   const router = useRouter();
   const socket = getSocket();
 
-  const [view, setView] = useState("TERMINAL"); // TERMINAL -> WELCOME -> LOBBY
-  const [terminalLines, setTerminalLines] = useState([]);
-  const [participants, setParticipants] = useState([]);
-  const [myPlayer, setMyPlayer] = useState({ name: "Player" });
+  // State for real-time data
+  const [participantCount, setParticipantCount] = useState(1); // Start at 1 (Me)
+  const [myName, setMyName] = useState("");
+  const [statusText, setStatusText] = useState("Waiting for Host...");
 
-  // 🟢 Fix Hydration: Start empty, set on client only
-  const [currentTime, setCurrentTime] = useState("");
-
-  const terminalRef = useRef(null);
-
-  // Helper to format date
-  const getFormattedDate = () => {
-    return new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  // --- 1. SETUP & SOCKETS ---
   useEffect(() => {
-    // Check if user is logged in
+    // 1. Get Session Info
     const pId = sessionStorage.getItem("PARTICIPANT_ID");
     const code = sessionStorage.getItem("SESSION_CODE");
     const name = sessionStorage.getItem("PLAYER_NAME");
@@ -57,359 +24,104 @@ export default function LobbyPage() {
       return;
     }
 
-    setMyPlayer({ name });
+    setMyName(name || "Player");
 
-    // Set initial time (Client side only)
-    setCurrentTime(getFormattedDate());
-
-    // Join the socket room
+    // 2. Join Session
     socket.emit("join:session", code);
 
-    // 🟢 LISTEN FOR GAME START
+    // 🟢 3. LISTEN FOR GAME START (Navigation)
     socket.on("game:started", () => {
-      console.log("Game started! Moving to play area...");
-      router.push("/play");
+      console.log("🚀 Game Started! Redirecting to Play Area...");
+      setStatusText("Game Starting! 🚀");
+      setTimeout(() => {
+        router.push("/play");
+      }, 500); // Small delay for visual effect
     });
 
-    // 🟢 LISTEN FOR REAL PARTICIPANTS (You need to implement this event in Backend)
-    // Assuming backend sends an array of users when someone joins
-    socket.on("session:update", (updatedParticipantList) => {
-      console.log("Participants updated:", updatedParticipantList);
-      setParticipants(updatedParticipantList);
+    // 🟢 4. LISTEN FOR REAL COUNT
+    // Ensure your backend emits "session:update" with the array of users
+    socket.on("session:update", (participantsArray) => {
+      console.log("👥 Participants Update:", participantsArray);
+      if (Array.isArray(participantsArray)) {
+        setParticipantCount(participantsArray.length);
+      }
     });
 
-    // Clock Interval
-    const timeInterval = setInterval(() => {
-      setCurrentTime(getFormattedDate());
-    }, 60000);
-
+    // Cleanup
     return () => {
       socket.off("game:started");
-      socket.off("session:update"); // Cleanup listener
-      clearInterval(timeInterval);
+      socket.off("session:update");
     };
   }, []);
 
-  // --- 2. TERMINAL ANIMATION ---
-  useEffect(() => {
-    if (view !== "TERMINAL") return;
-
-    let msgIndex = 0;
-    let charIndex = 0;
-    let currentLineText = "";
-
-    const typeNextChar = () => {
-      if (msgIndex >= CONFIG.terminalMessages.length) {
-        setTimeout(() => setView("WELCOME"), 800);
-        return;
-      }
-
-      const message = CONFIG.terminalMessages[msgIndex];
-
-      if (charIndex < message.length) {
-        currentLineText += message[charIndex];
-        setTerminalLines((prev) => {
-          const newLines = [...prev];
-          if (newLines.length === 0 || charIndex === 0)
-            newLines.push(currentLineText);
-          else newLines[newLines.length - 1] = currentLineText;
-          return newLines;
-        });
-        charIndex++;
-        setTimeout(typeNextChar, CONFIG.typingSpeed);
-      } else {
-        msgIndex++;
-        charIndex = 0;
-        currentLineText = "";
-        setTimeout(typeNextChar, CONFIG.messageDelay);
-      }
-    };
-
-    typeNextChar();
-  }, [view]);
-
-  // --- 3. WELCOME TRANSITION ---
-  useEffect(() => {
-    if (view === "WELCOME") {
-      const timer = setTimeout(() => {
-        setView("LOBBY");
-        // Ensure "Me" is visible initially if socket hasn't updated yet
-        setParticipants((prev) => {
-          if (prev.length > 0) return prev; // If socket already loaded data, don't overwrite
-          return [
-            {
-              id: "me",
-              name: sessionStorage.getItem("PLAYER_NAME"),
-              emoji: "😎",
-            },
-          ];
-        });
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [view]);
-
-  // --- RENDER ---
   return (
     <div className="lobby-body">
-      {/* 1. TERMINAL */}
-      {view === "TERMINAL" && (
-        <section className="terminal-section active">
-          <div className="terminal-container">
-            <div className="terminal-header">
-              <div className="terminal-buttons">
-                <span className="btn-close"></span>
-                <span className="btn-minimize"></span>
-                <span className="btn-maximize"></span>
-              </div>
-              <div className="terminal-title">session_lobby.sh</div>
-            </div>
-            <div className="terminal-body" ref={terminalRef}>
-              {terminalLines.map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
-              <span className="cursor">|</span>
-            </div>
+      <div className="lobby-container">
+        {/* HEADER */}
+        <header className="lobby-header">
+          <div className="logo">
+            <span className="logo-icon">🎯</span>
+            <span className="logo-text">GDG Quiz</span>
           </div>
-        </section>
-      )}
+          <div className="session-status">
+            <span className="status-dot"></span>
+            <span className="status-text">{statusText}</span>
+          </div>
+        </header>
 
-      {/* 2. WELCOME */}
-      <section
-        className={`welcome-section ${view === "WELCOME" ? "active" : ""}`}>
-        <div className="welcome-container">
-          <div className="welcome-icon">👋</div>
-          <h1 className="welcome-title">Welcome, {myPlayer.name}!</h1>
-          <p className="welcome-subtitle">
-            Get ready for an interactive experience!
+        {/* MAIN CONTENT: JUST THE COUNT */}
+        <main className="lobby-main">
+          <div className="welcome-text">
+            <h2>
+              Welcome, <span className="highlight">{myName}</span>!
+            </h2>
+            <p>You are in the lobby.</p>
+          </div>
+
+          <div className="count-card">
+            <div className="pulse-ring"></div>
+            <div className="count-number">{participantCount}</div>
+            <div className="count-label">Players Joined</div>
+          </div>
+
+          <p className="instruction-text">
+            Keep this screen open. The game will start automatically on your
+            device.
           </p>
-          <div className="welcome-loader">
-            <div className="loader-bar"></div>
-          </div>
-        </div>
-      </section>
+        </main>
+      </div>
 
-      {/* 3. LOBBY */}
-      <section className={`lobby-section ${view === "LOBBY" ? "active" : ""}`}>
-        <div className="lobby-container">
-          <header className="lobby-header">
-            <div className="logo">
-              <span className="logo-icon">🎯</span>
-              <span className="logo-text">GDG Quiz</span>
-            </div>
-            <div className="session-status">
-              <span className="status-dot"></span>
-              <span className="status-text">Waiting for Host</span>
-            </div>
-          </header>
-
-          <div className="lobby-main">
-            <div className="start-section">
-              <div className="motivation-card">
-                <h2 className="motivation-title">🚀 You are In!</h2>
-                <p className="motivation-text">
-                  Sit tight! The host will start the quiz shortly.
-                </p>
-                <div className="start-button disabled">
-                  <span className="button-text">Waiting...</span>
-                  <span className="button-icon">⏳</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="participants-section">
-              <div className="participants-header">
-                <h3 className="participants-title">Participants</h3>
-                <div className="participants-count">
-                  <span className="count-number">{participants.length}</span>
-                  <span className="count-label">online</span>
-                </div>
-              </div>
-              <div className="participants-display">
-                {participants.length === 0 ? (
-                  <p className="text-gray-400 text-sm">
-                    Waiting for players...
-                  </p>
-                ) : (
-                  participants.map((p, i) => (
-                    <div
-                      key={p.id || i}
-                      className="participant-avatar"
-                      title={p.name} // Show name on hover
-                      style={{ animationDelay: `${i * 0.1}s` }}>
-                      {p.emoji || "👤"} {/* Fallback emoji */}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          <footer className="lobby-footer">
-            <p>Google Developers Group • {currentTime}</p>
-          </footer>
-        </div>
-      </section>
-
-      {/* STYLES (Kept exactly as you had them) */}
       <style jsx global>{`
         :root {
           --primary: #2563eb;
           --bg: #f3f4f6;
-          --term-bg: #1e1e1e;
         }
-        /* ... REST OF YOUR CSS ... */
         .lobby-body {
           margin: 0;
           padding: 0;
           background: var(--bg);
-          height: 100vh;
-          width: 100vw;
-          overflow: hidden;
-          position: fixed;
-          top: 0;
-          left: 0;
-          font-family: sans-serif;
-        }
-
-        section {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: none;
-          opacity: 0;
-          transition: opacity 0.5s ease;
-        }
-        section.active {
-          display: flex;
-          opacity: 1;
-          z-index: 10;
-        }
-
-        /* Terminal */
-        .terminal-section {
-          background: #000;
-          justify-content: center;
-          align-items: center;
-        }
-        .terminal-container {
-          width: 90%;
-          max-width: 600px;
-          background: var(--term-bg);
-          border-radius: 8px;
-          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-          overflow: hidden;
-        }
-        .terminal-header {
-          background: #2d2d2d;
-          padding: 10px 15px;
-          display: flex;
-          align-items: center;
-          position: relative;
-        }
-        .terminal-buttons {
-          display: flex;
-          gap: 8px;
-        }
-        .terminal-buttons span {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          display: inline-block;
-        }
-        .btn-close {
-          background: #ff5f56;
-        }
-        .btn-minimize {
-          background: #ffbd2e;
-        }
-        .btn-maximize {
-          background: #27c93f;
-        }
-        .terminal-body {
-          padding: 20px;
-          color: #fff;
-          font-family: monospace;
-          min-height: 250px;
-          line-height: 1.5;
-        }
-        .cursor {
-          display: inline-block;
-          width: 8px;
-          background: #fff;
-          animation: blink 1s infinite;
-        }
-        @keyframes blink {
-          50% {
-            opacity: 0;
-          }
-        }
-
-        /* Welcome */
-        .welcome-section {
-          background: linear-gradient(135deg, #2563eb, #1d4ed8);
-          justify-content: center;
-          align-items: center;
-          color: white;
-          text-align: center;
-        }
-        .welcome-icon {
-          font-size: 64px;
-          margin-bottom: 20px;
-          animation: wave 2s infinite;
-        }
-        .welcome-loader {
-          width: 200px;
-          height: 4px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 4px;
-          margin: 30px auto;
-          overflow: hidden;
-        }
-        .loader-bar {
-          height: 100%;
-          background: white;
-          width: 0%;
-          animation: loading 2.5s linear forwards;
-        }
-        @keyframes loading {
-          to {
-            width: 100%;
-          }
-        }
-        @keyframes wave {
-          0%,
-          100% {
-            transform: rotate(0deg);
-          }
-          25% {
-            transform: rotate(20deg);
-          }
-          75% {
-            transform: rotate(-20deg);
-          }
-        }
-
-        /* Lobby */
-        .lobby-section {
-          background: #f3f4f6;
-          padding: 20px;
-          overflow-y: auto;
-        }
-        .lobby-container {
-          max-width: 1000px;
-          margin: 0 auto;
-          height: 100%;
+          min-height: 100vh;
           display: flex;
           flex-direction: column;
+          font-family: "Google Sans", sans-serif;
         }
+
+        .lobby-container {
+          max-width: 1200px;
+          margin: 0 auto;
+          width: 100%;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding: 20px;
+        }
+
+        /* HEADER */
         .lobby-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 30px;
+          margin-bottom: 40px;
         }
         .logo {
           display: flex;
@@ -437,51 +149,79 @@ export default function LobbyPage() {
           animation: pulse 2s infinite;
         }
 
+        /* MAIN */
         .lobby-main {
           flex: 1;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
           gap: 30px;
         }
-        @media (max-width: 768px) {
-          .lobby-main {
-            grid-template-columns: 1fr;
-          }
+
+        .welcome-text h2 {
+          font-size: 2rem;
+          color: #333;
+          margin: 0;
+        }
+        .welcome-text p {
+          color: #666;
+          font-size: 1.1rem;
+          margin-top: 5px;
+        }
+        .highlight {
+          color: #2563eb;
         }
 
-        .motivation-card,
-        .participants-section {
+        /* COUNT CARD */
+        .count-card {
+          position: relative;
+          width: 200px;
+          height: 200px;
           background: white;
-          padding: 30px;
-          border-radius: 24px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-          text-align: center;
-        }
-        .participants-display {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-          gap: 15px;
-          max-height: 300px;
-          overflow-y: auto;
-          margin-top: 20px;
-        }
-        .participant-avatar {
-          width: 50px;
-          height: 50px;
-          background: #f9fafb;
           border-radius: 50%;
           display: flex;
+          flex-direction: column;
           justify-content: center;
           align-items: center;
-          font-size: 24px;
-          animation: popIn 0.3s;
+          box-shadow: 0 10px 40px rgba(37, 99, 235, 0.2);
+          z-index: 2;
         }
-        .lobby-footer {
-          text-align: center;
-          padding: 20px;
-          color: #9ca3af;
-          font-size: 13px;
-          margin-top: auto;
+
+        .count-number {
+          font-size: 5rem;
+          font-weight: 800;
+          color: #2563eb;
+          line-height: 1;
+        }
+        .count-label {
+          font-size: 1rem;
+          color: #6b7280;
+          font-weight: 600;
+          margin-top: 5px;
+        }
+
+        /* PULSE ANIMATION */
+        .pulse-ring {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          border: 2px solid #2563eb;
+          animation: ripple 2s infinite;
+          z-index: 1;
+        }
+
+        .instruction-text {
+          max-width: 400px;
+          color: #6b7280;
+          line-height: 1.5;
+          background: rgba(255, 255, 255, 0.5);
+          padding: 15px;
+          border-radius: 12px;
         }
 
         @keyframes pulse {
@@ -489,12 +229,25 @@ export default function LobbyPage() {
             opacity: 0.5;
           }
         }
-        @keyframes popIn {
-          from {
-            transform: scale(0);
+        @keyframes ripple {
+          0% {
+            transform: scale(0.8);
+            opacity: 1;
           }
-          to {
-            transform: scale(1);
+          100% {
+            transform: scale(1.5);
+            opacity: 0;
+          }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+          .count-number {
+            font-size: 4rem;
+          }
+          .count-card {
+            width: 160px;
+            height: 160px;
           }
         }
       `}</style>

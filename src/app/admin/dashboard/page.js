@@ -98,25 +98,37 @@ export default function Dashboard() {
   const startSession = async (id, code) => {
     if (!confirm(`Start Session ${code}? Players can join now.`)) return;
 
-    // 🚀 FIX: Open Leaderboard IMMEDIATELY to prevent Popup Blocker
+    // 1. Open Leaderboard (Keep this to avoid popup blockers)
     window.open(`/leaderboard?code=${code}`, "_blank");
 
-    // Then update DB
-    await fetch(`${API_URL}/sessions/${id}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "admin-passcode": passcode,
-      },
-      body: JSON.stringify({ status: "ACTIVE" }),
-    });
+    try {
+      // 2. 🟢 CALL THE DEDICATED START ENDPOINT
+      // This endpoint updates DB to "ACTIVE" AND sends the "game:started" socket signal
+      const res = await fetch(`${API_URL}/sessions/start`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "admin-passcode": passcode,
+        },
+        body: JSON.stringify({ sessionCode: code }), // Send the Code, not the ID
+      });
 
-    // Then start game loop
-    socket.emit("admin:start_game", code);
+      const data = await res.json();
 
-    loadSessions();
+      if (data.success) {
+        // Success! The server has now told all users to go to /play
+        console.log("Session started successfully");
+      } else {
+        alert("Failed to start: " + data.message);
+      }
+
+      // 3. Refresh List
+      loadSessions();
+    } catch (e) {
+      console.error("Start Session Error:", e);
+      alert("Network error starting session");
+    }
   };
-
   const stopSession = async (id) => {
     if (!confirm("Stop Session?")) return;
     await fetch(`${API_URL}/sessions/${id}/status`, {
