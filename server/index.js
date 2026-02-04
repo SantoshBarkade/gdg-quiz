@@ -53,8 +53,6 @@ mongoose
   .connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
   .then(async () => {
     console.log("✅ MongoDB Connected");
-    // Optional: Reset stuck sessions on restart
-    // await Session.updateMany({ status: "ACTIVE" }, { status: "WAITING" });
   })
   .catch((err) => console.error("❌ Mongo Error:", err.message));
 
@@ -86,7 +84,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 2. SYNC STATE (For Reconnecting Users)
+  // 2. SYNC STATE (For Reconnecting Users & Late Joiners)
   socket.on("sync:state", async (sessionCode) => {
     try {
       const code = String(sessionCode).trim().toUpperCase();
@@ -110,8 +108,7 @@ io.on("connection", (socket) => {
         : 0;
 
       if (remaining <= 0) {
-        // If time is up, we are likely in the "Result" or "Break" phase
-        // You could emit the last result here if you wanted
+        // If time is up, likely in "Result" phase
         socket.emit("sync:idle");
         return;
       }
@@ -120,9 +117,20 @@ io.on("connection", (socket) => {
       const q = await Question.findById(session.currentQuestionId);
       if (!q) return;
 
+      // 🟢 FIX: Calculate real Q number and Total for the Progress Bar
+      const allQuestions = await Question.find({ sessionId: code })
+        .sort({ createdAt: 1 })
+        .select("_id");
+
+      const total = allQuestions.length;
+      const currentIdx = allQuestions.findIndex(
+        (x) => x._id.toString() === q._id.toString(),
+      );
+      const qNum = currentIdx !== -1 ? currentIdx + 1 : 1;
+
       socket.emit("game:question", {
-        qNum: 999, // We might not know exact qNum here without complex queries, usually fine to omit or fetch
-        total: "?",
+        qNum: qNum, // ✅ Real Number (e.g., 1)
+        total: total, // ✅ Real Total (e.g., 10)
         time: remaining,
         question: {
           _id: q._id,
