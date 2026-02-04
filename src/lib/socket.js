@@ -1,14 +1,16 @@
 import { io } from "socket.io-client";
 
-// Your Render Backend URL
-const SOCKET_URL = "hhttps://gdgslio.onrender.com/api";
+// ✅ FIXED URL (No double 'h', and removed '/api')
+const SOCKET_URL = "https://gdgslio.onrender.com";
+
 let socket;
 
 export const getSocket = () => {
   if (!socket) {
     socket = io(SOCKET_URL, {
-      transports: ["websocket"],
+      transports: ["websocket"], // Forces modern websocket connection
       autoConnect: true,
+      withCredentials: true, // Good practice for CORS
     });
   }
   return socket;

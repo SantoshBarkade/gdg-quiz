@@ -4,50 +4,63 @@ import { useRouter } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 import Footer from "@/components/Footer";
 
+// 🟢 CONFIGURATION
+const API_URL = "https://gdgslio.onrender.com/api";
+
 export default function LobbyPage() {
   const router = useRouter();
   const socket = getSocket();
 
-  // State for real-time data
-  const [participantCount, setParticipantCount] = useState(1); // Start at 1 (Me)
+  const [participantCount, setParticipantCount] = useState(1);
   const [myName, setMyName] = useState("");
   const [statusText, setStatusText] = useState("Waiting for Host...");
 
   useEffect(() => {
-    // 1. Get Session Info
     const pId = sessionStorage.getItem("PARTICIPANT_ID");
-    const code = sessionStorage.getItem("SESSION_CODE");
+    const rawCode = sessionStorage.getItem("SESSION_CODE");
     const name = sessionStorage.getItem("PLAYER_NAME");
 
-    if (!pId || !code) {
+    if (!pId || !rawCode) {
       router.push("/user");
       return;
     }
 
+    const code = rawCode.toUpperCase(); // 🔒 FORCE UPPERCASE FIX
     setMyName(name || "Player");
 
-    // 2. Join Session
+    // 1. 🔍 IMMEDIATE STATUS CHECK (Fixes "Missed Signal" Bug)
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/sessions/${code}`);
+        const data = await res.json();
+
+        if (data.success && data.data.status === "ACTIVE") {
+          console.log("⚡ Game is ALREADY ACTIVE. Moving now...");
+          router.push("/play");
+        }
+      } catch (e) {
+        console.error("Status check failed", e);
+      }
+    };
+    checkStatus();
+
+    // 2. JOIN SOCKET ROOM
     socket.emit("join:session", code);
 
-    // 🟢 3. LISTEN FOR GAME START (Navigation)
+    // 3. LISTEN FOR START EVENT (Real-time trigger)
     socket.on("game:started", () => {
-      console.log("🚀 Game Started! Redirecting to Play Area...");
+      console.log("🚀 Signal Received! Redirecting...");
       setStatusText("Game Starting! 🚀");
-      setTimeout(() => {
-        router.push("/play");
-      }, 500); // Small delay for visual effect
+      setTimeout(() => router.push("/play"), 500);
     });
 
-    // 🟢 4. LISTEN FOR REAL COUNT
-    // Ensure your backend emits "session:update" with the array of users
+    // 4. LISTEN FOR COUNT UPDATE
     socket.on("session:update", (participantsArray) => {
-      console.log("👥 Participants Update:", participantsArray);
       if (Array.isArray(participantsArray)) {
         setParticipantCount(participantsArray.length);
       }
     });
 
-    // Cleanup
     return () => {
       socket.off("game:started");
       socket.off("session:update");
@@ -57,7 +70,6 @@ export default function LobbyPage() {
   return (
     <div className="lobby-body">
       <div className="lobby-container">
-        {/* HEADER */}
         <header className="lobby-header">
           <div className="logo">
             <span className="logo-icon">🎯</span>
@@ -69,7 +81,6 @@ export default function LobbyPage() {
           </div>
         </header>
 
-        {/* MAIN CONTENT: JUST THE COUNT */}
         <main className="lobby-main">
           <div className="welcome-text">
             <h2>
@@ -85,10 +96,13 @@ export default function LobbyPage() {
           </div>
 
           <p className="instruction-text">
-            Keep this screen open. The game will start automatically on your
-            device.
+            Keep this screen open. The game will start automatically.
           </p>
         </main>
+
+        <div style={{ marginTop: "auto", width: "100%" }}>
+          <Footer />
+        </div>
       </div>
 
       <style jsx global>{`
@@ -105,7 +119,6 @@ export default function LobbyPage() {
           flex-direction: column;
           font-family: "Google Sans", sans-serif;
         }
-
         .lobby-container {
           max-width: 1200px;
           margin: 0 auto;
@@ -115,8 +128,6 @@ export default function LobbyPage() {
           flex-direction: column;
           padding: 20px;
         }
-
-        /* HEADER */
         .lobby-header {
           display: flex;
           justify-content: space-between;
@@ -148,8 +159,6 @@ export default function LobbyPage() {
           border-radius: 50%;
           animation: pulse 2s infinite;
         }
-
-        /* MAIN */
         .lobby-main {
           flex: 1;
           display: flex;
@@ -159,7 +168,6 @@ export default function LobbyPage() {
           text-align: center;
           gap: 30px;
         }
-
         .welcome-text h2 {
           font-size: 2rem;
           color: #333;
@@ -173,8 +181,6 @@ export default function LobbyPage() {
         .highlight {
           color: #2563eb;
         }
-
-        /* COUNT CARD */
         .count-card {
           position: relative;
           width: 200px;
@@ -188,7 +194,6 @@ export default function LobbyPage() {
           box-shadow: 0 10px 40px rgba(37, 99, 235, 0.2);
           z-index: 2;
         }
-
         .count-number {
           font-size: 5rem;
           font-weight: 800;
@@ -201,8 +206,6 @@ export default function LobbyPage() {
           font-weight: 600;
           margin-top: 5px;
         }
-
-        /* PULSE ANIMATION */
         .pulse-ring {
           position: absolute;
           top: 0;
@@ -214,7 +217,6 @@ export default function LobbyPage() {
           animation: ripple 2s infinite;
           z-index: 1;
         }
-
         .instruction-text {
           max-width: 400px;
           color: #6b7280;
@@ -223,7 +225,6 @@ export default function LobbyPage() {
           padding: 15px;
           border-radius: 12px;
         }
-
         @keyframes pulse {
           50% {
             opacity: 0.5;
@@ -239,8 +240,6 @@ export default function LobbyPage() {
             opacity: 0;
           }
         }
-
-        /* Mobile */
         @media (max-width: 768px) {
           .count-number {
             font-size: 4rem;
