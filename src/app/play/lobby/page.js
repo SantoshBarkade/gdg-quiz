@@ -29,20 +29,15 @@ export default function LobbyPage() {
     // 2. Sync to see if game is already running
     socket.emit("sync:state", code);
 
-    // 🟢 3. SMART REDIRECT HANDLER
+    // 🟢 3. SMART REDIRECT (Listen for ANY game event)
     const goToGame = () => {
       console.log("🚀 Game is active! Redirecting...");
       setStatusText("Game is Running! Joining...");
       router.push("/play");
     };
 
-    // A. Normal Start (Host clicks Start)
     socket.on("game:started", goToGame);
-
-    // B. Late Join (Game already in Question phase)
     socket.on("game:question", goToGame);
-
-    // C. Late Join (Game already in Leaderboard/Break phase)
     socket.on("game:ranks", goToGame);
     socket.on("game:result", goToGame);
 

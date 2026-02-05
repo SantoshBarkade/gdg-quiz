@@ -38,18 +38,18 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
-// 🟢 HELPER: Get accurate counts per session
+// 🟢 HELPER: Accurate Counts Per Session
 const getAdminStats = () => {
   const sessionCounts = {};
-  // Iterate all rooms (some are session codes, some are socket IDs)
   for (const [room, ids] of io.sockets.adapter.rooms) {
+    // Only count rooms that look like session codes (Uppercase, length <= 10)
     if (room.length <= 10 && room === room.toUpperCase()) {
        sessionCounts[room] = ids.size;
     }
   }
   return {
     activeUsers: io.engine.clientsCount,
-    sessionCounts // { "QUIZ101": 5, "TEST": 2 }
+    sessionCounts 
   };
 };
 
@@ -88,7 +88,7 @@ io.on("connection", (socket) => {
       const now = new Date();
       const remainingTime = session.questionEndsAt ? Math.ceil((new Date(session.questionEndsAt) - now) / 1000) : 0;
 
-      // 🟢 ACTIVE QUESTION (Time > 0)
+      // 🟢 ACTIVE QUESTION
       if (session.currentQuestionId && remainingTime > 0) {
         const question = await Question.findById(session.currentQuestionId).lean();
         if (question) {
@@ -109,8 +109,10 @@ io.on("connection", (socket) => {
         }
       }
 
-      // 🟢 BREAK TIME (Time <= 0) - SEND RANKS TO FORCE LATE JOINERS OUT OF LOBBY
+      // 🟢 BREAK TIME (Timer Ended) - Force Redirect
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
+      
+      // Sending this forces Lobby -> Result
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),
         rank: idx + 1,

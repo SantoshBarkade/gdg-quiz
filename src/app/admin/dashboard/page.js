@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   
-  // 🟢 NEW STATS STATE
+  // 🟢 NEW STATS OBJECT
   const [stats, setStats] = useState({ activeUsers: 0, sessionCounts: {} });
 
   const [currentSessionCode, setCurrentSessionCode] = useState(null);
@@ -37,7 +37,7 @@ export default function Dashboard() {
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
 
-    // 🟢 LISTEN FOR DETAILED STATS
+    // 🟢 LISTEN FOR STATS
     socket.on("admin:stats", (data) => {
       setStats({ 
         activeUsers: data.activeUsers, 
@@ -205,7 +205,7 @@ export default function Dashboard() {
                 <div className="session-meta">
                   <span className="code-pill">{s.sessionCode}</span>
                   <span className={`badge ${s.status}`}>{s.status}</span>
-                  {/* 🟢 NEW: Player Count for this Session */}
+                  {/* 🟢 SHOW PLAYER COUNT PER SESSION */}
                   <span className="player-count">👥 {stats.sessionCounts[s.sessionCode] || 0}</span>
                 </div>
               </div>
@@ -232,11 +232,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Global Stats */}
+        {/* 🟢 GLOBAL STATS (Subtracted 1 for Admin) */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
-            {/* 🟢 Subtract 1 to hide admin self-connection */}
             <div className="stat-value">{Math.max(0, stats.activeUsers - 1)}</div>
             <div className="stat-label">Total Connections</div>
           </div>
@@ -261,7 +260,7 @@ export default function Dashboard() {
               <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{currentSessionCode}</span></h2>
               <button className="btn-grey" onClick={closeManager}>Close</button>
             </div>
-            {/* ... Question Forms (Same as before) ... */}
+            {/* Same Question UI ... */}
             <div className="card">
               <h3>Add New Question</h3>
               <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1rem", padding: "16px" }} />

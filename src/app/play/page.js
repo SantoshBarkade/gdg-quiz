@@ -18,7 +18,7 @@ export default function GamePlay() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [result, setResult] = useState(null);
   const [winners, setWinners] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]); // Kept for GameOver usage
+  const [leaderboard, setLeaderboard] = useState([]); 
   const [stats, setStats] = useState({ correct: 0, incorrect: 0, timeout: 0 });
   const [history, setHistory] = useState([]);
 
@@ -174,7 +174,7 @@ export default function GamePlay() {
              </div>
           )}
 
-          {/* 🟢 RESULT VIEW (Leaderboard Removed) */}
+          {/* 🟢 RESULT VIEW (Removed Leaderboard List) */}
           {view === "RESULT" && result && (
             <div className="results-container">
                <div className="trophy-container" style={{ fontSize: "4em" }}>{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
@@ -190,13 +190,12 @@ export default function GamePlay() {
             </div>
           )}
 
-          {/* 🟢 GAMEOVER VIEW (Top 3 Shown Here) */}
+          {/* 🟢 GAMEOVER VIEW (Leaderboard Shown Here) */}
           {view === "GAMEOVER" && (
             <div className="results-container">
                <div className="trophy-icon">🏆</div>
                <h2 className="complete-title">Quiz Complete!</h2>
                
-               {/* 🏆 Leaderboard only at the end */}
                <div className="leaderboard-card"><div className="leaderboard-header">Top Winners</div><div className="leaderboard-list">{winners.map((w, idx) => (<div key={idx} className={`leader-item ${idx===0?"gold":idx===1?"silver":idx===2?"bronze":""}`}><span>#{idx+1} {w.name}</span><span className="pts">{w.score} pts</span></div>))}</div></div>
                
                <div className="performance-card"><div className="perf-label">Your Performance</div><div className="rank-value">Rank: <span>#{player.rank}</span></div><div className="accuracy-label">Score: {player.score} pts</div></div>
