@@ -110,7 +110,15 @@ export default function GamePlay() {
     clearInterval(timerRef.current);
     setView("GAMEOVER");
     if (data.winners) setWinners(data.winners);
-    triggerConfetti(true);
+    
+    // 🟢 Big Confetti for Game Over
+    const duration = 3000;
+    const end = Date.now() + duration;
+    (function frame() {
+      confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
+      confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    }());
 
     try {
       const pId = sessionStorage.getItem("PARTICIPANT_ID");
@@ -150,17 +158,8 @@ export default function GamePlay() {
     }
   };
 
-  const triggerConfetti = (big = false) => {
-    if (big) {
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ["#4285F4", "#34A853", "#FBBC05", "#EA4335"],
-      });
-    } else {
-      confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
-    }
+  const triggerConfetti = () => {
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   };
 
   let timerClass = "timer-circle-progress";
@@ -178,206 +177,136 @@ export default function GamePlay() {
     if (idx === 0) return "🥇";
     if (idx === 1) return "🥈";
     if (idx === 2) return "🥉";
-    return idx + 1;
+    return `#${idx + 1}`;
   };
 
   return (
     <div className="main-body">
       <div className="background-grid"></div>
 
-      <div className="container">
-        <div className="quiz-card">
-          
-          {view === "LOADING" && (
-            <div className="start-screen" style={{textAlign: 'center', padding: '40px'}}>
-               <div className="loader-spinner"></div>
-               <h2 style={{color: '#666', marginTop: '20px'}}>Connecting...</h2>
-            </div>
-          )}
+      {view === "GAMEOVER" ? (
+        // 🟢 GAME OVER VIEW (Full Page Design)
+        <div className="game-over-wrapper">
+          <div className="game-over-header">
+            <div className="trophy-icon">🏆</div>
+            <h1>Quiz Complete!</h1>
+            <p>Here are the top performers</p>
+          </div>
 
-          {view === "LOBBY" && (
-            <div className="start-screen">
-              <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
-                 <img src="/assests/logo.png" alt="Logo" style={{height: '60px'}} />
+          <div className="winners-grid">
+            {winners.map((w, idx) => (
+              <div key={idx} className={`winner-card rank-${idx + 1}`}>
+                <div className="medal-icon">{getRankIcon(idx)}</div>
+                <div className="winner-name">{w.name}</div>
+                <div className="winner-score">{w.totalScore} pts</div>
               </div>
-              <h1>GDG Quiz</h1>
-              <p className="start-screen-subtitle">
-                Welcome, <span style={{ color: "#2563eb", fontWeight: "bold" }}>{player.name}</span>!
-              </p>
-              <div className="quiz-rules">
-                <h3>Waiting for Host...</h3>
-                <ul>
-                  <li>Keep this screen open.</li>
-                  <li>The game will start automatically.</li>
-                  <li>Faster answers get more points!</li>
-                </ul>
-              </div>
-              <div className="timer-circle-container" style={{ margin: "0 auto" }}>
-                <div className="timer-number">⏳</div>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
 
-          {view === "QUESTION" && question && (
-            <div id="quizScreen">
-              <div className="progress-container">
-                <div className="progress-info">
-                  <div className="question-counter">
-                    Q {question.qNum} / {question.total}
-                  </div>
-                  <div className="score-display-top">Score: {player.score}</div>
-                  <div className="clock-container">
-                    <div className="timer-circle-container">
-                      <svg className="timer-svg" width="80" height="80" viewBox="0 0 100 100">
-                        <circle className="timer-circle-bg" cx="50" cy="50" r="45"></circle>
-                        <circle className={timerClass} cx="50" cy="50" r="45" style={{ strokeDashoffset }}></circle>
-                      </svg>
-                      <div className="timer-text">
-                        <div className="timer-number">{timeLeft}</div>
-                      </div>
+          <div className="stats-dashboard">
+            <div className="stat-box blue">
+              <div className="stat-label">Your Rank</div>
+              <div className="stat-val">#{player.rank}</div>
+            </div>
+            <div className="stat-box green">
+              <div className="stat-label">Total Score</div>
+              <div className="stat-val">{player.score}</div>
+            </div>
+            <div className="stat-box yellow">
+              <div className="stat-label">Correct</div>
+              <div className="stat-val">{stats.correct}</div>
+            </div>
+          </div>
+
+          <div className="review-container">
+            <h3>Your Answers</h3>
+            <div className="review-list">
+              {history.map((h, i) => (
+                <div key={i} className={`review-item ${h.status === "CORRECT" ? "correct" : "wrong"}`}>
+                  <div className="review-q-num">Q{i+1}</div>
+                  <div className="review-content">
+                    <p className="review-q-text">{h.questionText}</p>
+                    <div className="review-badges">
+                      <span className="badge user">You: {h.userSelected}</span>
+                      <span className="badge answer">Ans: {h.correctAnswer}</span>
                     </div>
                   </div>
+                  <div className="review-icon">{h.status === "CORRECT" ? "✅" : "❌"}</div>
                 </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${progressPercent}%` }}></div>
-                </div>
-              </div>
-              <div className="question-container">
-                <div className="question-text">{question.question.questionText}</div>
-                <div className="answers-grid">
-                  {question.question.options.map((opt, idx) => {
-                    const isSelected = selectedOption === opt.text;
-                    return (
-                      <button
-                        key={idx}
-                        className={`answer-btn ${isSelected ? "selected-answer" : ""}`}
-                        data-option={String.fromCharCode(65 + idx)}
-                        onClick={() => submitAnswer(opt.text)}
-                        disabled={!!selectedOption}
-                      >
-                        {opt.text}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {view === "RESULT" && result && (
-            <div className="results-container">
-              <div className="trophy-container" style={{ fontSize: "4em" }}>
-                {selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}
-              </div>
-              <h2 className="complete-title">
-                {selectedOption === result.correctAnswer ? (
-                  <span style={{ color: "#34A853" }}>Correct!</span>
-                ) : (
-                  <span style={{ color: "#EA4335" }}>Wrong!</span>
-                )}
-              </h2>
-              <div className="performance-message" style={{ marginBottom: "20px" }}>
-                Correct Answer: <strong>{result.correctAnswer}</strong>
-              </div>
-              
-              <div className="stats-row" style={{ marginBottom: "20px", justifyContent: 'center' }}>
-                <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}>
-                  <div className="stat-num" style={{ color: "#4285F4" }}>
-                    {player.score}
-                  </div>
-                  <div className="stat-text">Score</div>
-                </div>
-                <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}>
-                  <div className="stat-num" style={{ color: "#b45309" }}>
-                    #{player.rank}
-                  </div>
-                  <div className="stat-text">Current Rank</div>
-                </div>
-              </div>
-              <p style={{ color: "#666", marginTop: "10px" }}>
-                Waiting for next question...
-              </p>
-            </div>
-          )}
-
-          {view === "GAMEOVER" && (
-            <div className="results-container">
-              <div className="trophy-icon">🏆</div>
-              <h2 className="complete-title">Quiz Complete!</h2>
-              
-              <div className="leaderboard-card">
-                <div className="leaderboard-header">Top Performers</div>
-                <div className="leaderboard-list">
-                  {winners.map((w, idx) => (
-                    <div
-                      key={idx}
-                      className={`leader-item rank-${idx + 1}`}
-                    >
-                      {/* 🟢 MEDAL ICON */}
-                      <div className="rank-badge">{getRankIcon(idx)}</div>
-                      <div className="player-info">
-                        <span className="player-name">{w.name}</span>
-                      </div>
-                      <span className="pts">{w.totalScore} pts</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="performance-card">
-                <div className="perf-label">Your Performance</div>
-                <div className="rank-value">
-                  Rank: <span>#{player.rank}</span>
-                </div>
-                <div className="accuracy-label">Score: {player.score} pts</div>
-              </div>
-              <div className="review-section">
-                <h3 style={{ marginTop: "20px", marginBottom: "10px", color: "#333", fontFamily: "Poppins" }}>
-                  📝 Your Answers Review
-                </h3>
-                <div className="review-list">
-                  {history.length > 0 ? (
-                    history.map((h, i) => (
-                      <div
-                        key={i}
-                        className={`review-card ${
-                          h.status === "CORRECT" ? "rev-correct" : "rev-wrong"
-                        }`}
-                      >
-                        <div className="rev-header">
-                          <span className="q-badge">Q{i + 1}</span>
-                          <span className="rev-status-text">{h.status}</span>
-                        </div>
-                        <p className="rev-q-text">{h.questionText}</p>
-                        <div className="rev-ans-row">
-                          <div className="rev-box user-box">You: {h.userSelected}</div>
-                          <div className="rev-box correct-box">Ans: {h.correctAnswer}</div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p style={{ color: "#777" }}>Loading review...</p>
-                  )}
-                </div>
-              </div>
-              <button
-                className="restart-btn"
-                onClick={() => router.push("/")}
-                style={{ marginTop: "20px" }}
-              >
-                Exit to Home
-              </button>
-            </div>
-          )}
+          <button className="home-btn" onClick={() => router.push("/")}>Back to Home</button>
         </div>
-      </div>
-      
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;800&display=swap" rel="stylesheet" />
+      ) : (
+        // 🟢 NORMAL GAME CARD (Loading, Question, Result)
+        <div className="container">
+          <div className="quiz-card">
+            
+            {view === "LOADING" && (
+              <div style={{textAlign: 'center', padding: '60px'}}>
+                 <div className="loader-spinner"></div>
+                 <h2 style={{color: '#666', marginTop: '20px'}}>Connecting...</h2>
+              </div>
+            )}
+
+            {view === "LOBBY" && (
+              <div className="start-screen">
+                <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
+                   <img src="/assests/logo.png" alt="Logo" style={{height: '60px'}} />
+                </div>
+                <h1>GDG Quiz</h1>
+                <p className="start-screen-subtitle">Welcome, <strong>{player.name}</strong>!</p>
+                <div className="quiz-rules"><h3>Waiting for Host...</h3></div>
+                <div className="timer-circle-container" style={{ margin: "0 auto" }}><div className="timer-number">⏳</div></div>
+              </div>
+            )}
+
+            {view === "QUESTION" && question && (
+              <div id="quizScreen">
+                <div className="progress-container">
+                  <div className="progress-info">
+                    <div className="question-counter">Q {question.qNum} / {question.total}</div>
+                    <div className="score-display-top">Score: {player.score}</div>
+                    <div className="clock-container"><div className="timer-circle-container"><svg className="timer-svg" width="80" height="80" viewBox="0 0 100 100"><circle className="timer-circle-bg" cx="50" cy="50" r="45"></circle><circle className={timerClass} cx="50" cy="50" r="45" style={{ strokeDashoffset }}></circle></svg><div className="timer-text"><div className="timer-number">{timeLeft}</div></div></div></div>
+                  </div>
+                  <div className="progress-bar"><div className="progress-fill" style={{ width: `${progressPercent}%` }}></div></div>
+                </div>
+                <div className="question-container">
+                  <div className="question-text">{question.question.questionText}</div>
+                  <div className="answers-grid">
+                    {question.question.options.map((opt, idx) => {
+                      const isSelected = selectedOption === opt.text;
+                      return (<button key={idx} className={`answer-btn ${isSelected ? "selected-answer" : ""}`} data-option={String.fromCharCode(65 + idx)} onClick={() => submitAnswer(opt.text)} disabled={!!selectedOption}>{opt.text}</button>);
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {view === "RESULT" && result && (
+              <div className="results-container">
+                <div className="trophy-container" style={{ fontSize: "4em" }}>{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
+                <h2 className="complete-title">{selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}</h2>
+                <div className="performance-message" style={{ marginBottom: "20px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
+                <div className="stats-row" style={{ marginBottom: "20px", justifyContent: 'center' }}>
+                  <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
+                  <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}><div className="stat-num" style={{ color: "#b45309" }}>#{player.rank}</div><div className="stat-text">Current Rank</div></div>
+                </div>
+                <p style={{ color: "#666", marginTop: "10px" }}>Waiting for next question...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
 
       <style jsx global>{`
         * { box-sizing: border-box; }
         .main-body {
-          font-family: 'Inter', sans-serif;
+          font-family: 'Poppins', sans-serif;
           background: #ffffff;
           min-height: 100vh;
           display: flex;
@@ -385,15 +314,15 @@ export default function GamePlay() {
           align-items: center;
           padding: 20px;
           position: relative;
-          overflow: hidden;
+          overflow-y: auto; /* Allow scrolling for game over */
         }
 
         .background-grid {
-          position: absolute;
+          position: fixed;
           inset: 0;
           background-image:
-            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px);
           background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
@@ -410,104 +339,88 @@ export default function GamePlay() {
           border-top: 6px solid #4285F4;
         }
 
-        h1, h2, h3, .complete-title { font-family: 'Poppins', sans-serif; }
+        /* 🟢 GAME OVER STYLES */
+        .game-over-wrapper {
+          width: 100%; max-width: 600px;
+          position: relative; z-index: 2;
+          text-align: center;
+          padding-bottom: 40px;
+        }
+        
+        .game-over-header h1 { font-size: 2.5rem; color: #202124; margin: 10px 0; }
+        .game-over-header p { color: #5f6368; }
+        .trophy-icon { font-size: 4rem; animation: pulseZoom 2s infinite; }
 
-        /* Leaderboard Styles (Medal Theme) */
-        .leaderboard-card {
-          border: 1px solid #e0e0e0;
+        .winners-grid { display: flex; flex-direction: column; gap: 10px; margin: 30px 0; }
+        .winner-card {
+          background: white; padding: 15px 20px;
           border-radius: 16px;
-          padding: 0;
-          margin-bottom: 25px;
-          overflow: hidden;
-          background: #fff;
+          display: flex; align-items: center; justify-content: space-between;
+          border: 1px solid #eee;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        .leaderboard-header {
-          background: #f8f9fa;
-          padding: 15px;
-          font-weight: 800;
-          color: #4285F4;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          font-size: 0.9rem;
-          border-bottom: 1px solid #eee;
+        
+        /* Rank Styles */
+        .rank-1 { border: 2px solid #FFD700; background: linear-gradient(135deg, #fff9c4, #fff); transform: scale(1.05); }
+        .rank-2 { border: 2px solid #C0C0C0; background: linear-gradient(135deg, #f5f5f5, #fff); }
+        .rank-3 { border: 2px solid #CD7F32; background: linear-gradient(135deg, #ffe0b2, #fff); }
+        
+        .medal-icon { font-size: 1.5rem; width: 40px; }
+        .winner-name { font-weight: 700; color: #333; flex: 1; text-align: left; }
+        .winner-score { font-weight: 800; color: #4285F4; }
+
+        .stats-dashboard { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
+        .stat-box { background: white; padding: 15px; border-radius: 16px; border: 1px solid #eee; }
+        .stat-label { font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 600; }
+        .stat-val { font-size: 1.5rem; font-weight: 800; margin-top: 5px; }
+        .blue .stat-val { color: #4285F4; }
+        .green .stat-val { color: #34A853; }
+        .yellow .stat-val { color: #FBBC05; }
+
+        .review-container { background: white; border-radius: 20px; padding: 25px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .review-container h3 { margin-top: 0; color: #444; }
+        .review-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        
+        .review-item { 
+          display: flex; gap: 15px; padding: 15px; 
+          border-radius: 12px; background: #f9f9f9; border: 1px solid #eee;
         }
-        .leaderboard-list {
-          padding: 10px;
-          max-height: 300px;
-          overflow-y: auto;
-        }
-        .leader-item {
-          display: flex;
-          align-items: center;
-          padding: 12px 15px;
-          margin-bottom: 8px;
-          background: white;
-          border-radius: 12px;
-          border: 1px solid #f0f0f0;
+        .review-item.correct { border-left: 4px solid #34A853; background: #f6fffa; }
+        .review-item.wrong { border-left: 4px solid #EA4335; background: #fff8f8; }
+        
+        .review-q-num { font-weight: 800; color: #888; }
+        .review-content { flex: 1; }
+        .review-q-text { font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #333; }
+        
+        .review-badges { display: flex; gap: 10px; font-size: 0.85rem; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+        .badge.user { background: white; border: 1px solid #ddd; }
+        .badge.answer { background: #e6fffa; color: #00796b; border: 1px solid #b2dfdb; }
+
+        .home-btn {
+          margin-top: 30px;
+          background: #4285F4; color: white; border: none;
+          padding: 15px 40px; border-radius: 50px;
+          font-weight: 700; font-size: 1rem;
+          cursor: pointer; box-shadow: 0 10px 25px rgba(66, 133, 244, 0.3);
           transition: transform 0.2s;
         }
-        .leader-item:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        
-        .rank-badge {
-          width: 40px; height: 40px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 1.2rem;
-          font-weight: 800; color: #5f6368;
-          margin-right: 15px;
-          flex-shrink: 0;
-        }
+        .home-btn:hover { transform: translateY(-3px); }
 
-        /* 🟢 MEDAL STYLING */
-        /* Gold */
-        .rank-1 { 
-          background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
-          border: 2px solid #FFD700;
-          box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
-        }
-        .rank-1 .rank-badge { font-size: 1.8rem; }
-
-        /* Silver */
-        .rank-2 { 
-          background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%);
-          border: 2px solid #C0C0C0;
-        }
-        .rank-2 .rank-badge { font-size: 1.5rem; }
-
-        /* Bronze */
-        .rank-3 { 
-          background: linear-gradient(135deg, #ffe0b2 0%, #fff 100%);
-          border: 2px solid #CD7F32;
-        }
-        .rank-3 .rank-badge { font-size: 1.5rem; }
-
-        .player-info { flex: 1; text-align: left; }
-        .player-name { font-weight: 600; color: #333; }
-        .pts { font-weight: 800; color: #4285F4; font-family: 'Poppins', sans-serif; }
-
-        /* ... Other existing styles ... */
+        /* ... Reuse styles from before for Quiz Card ... */
         .loader-spinner {
           border: 4px solid #f3f3f3;
           border-top: 4px solid #4285F4;
           border-radius: 50%;
-          width: 40px;
-          height: 40px;
+          width: 40px; height: 40px;
           animation: spin 1s linear infinite;
           margin: 0 auto;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .review-section { border-top: 2px dashed #e0e0e0; padding-top: 20px; margin-top: 20px; text-align: left; }
-        .review-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .review-card { padding: 15px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; }
-        .rev-correct { border-left: 5px solid #34A853; background: #f0fdf4; }
-        .rev-wrong { border-left: 5px solid #EA4335; background: #fef2f2; }
-        .rev-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; }
-        .q-badge { background: #eee; padding: 2px 8px; border-radius: 4px; color: #555; }
-        .rev-q-text { font-weight: 600; margin-bottom: 10px; color: #333; font-size: 1rem; }
-        .rev-ans-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; }
-        .rev-box { padding: 5px 10px; border-radius: 6px; }
-        .user-box { background: #fff; border: 1px solid #ddd; }
-        .correct-box { background: #e6fffa; border: 1px solid #b2f5ea; color: #047481; font-weight: bold; }
+        
+        .start-screen, .results-container { text-align: center; animation: fadeIn 1s ease forwards; }
+        .complete-title { color: #4285f4; font-size: 2.2em; margin-bottom: 25px; font-weight: 800; }
+        .trophy-icon, .trophy-container { font-size: 4em; margin-bottom: 10px; display: inline-block; animation: pulseZoom 2s ease-in-out infinite; }
         
         .stats-row { display: flex; gap: 15px; } 
         .mini-stat { padding: 15px 25px; border-radius: 16px; background: #f5f5f5; text-align: center; border: 1px solid transparent; min-width: 120px; }
@@ -537,18 +450,6 @@ export default function GamePlay() {
         .answer-btn:hover { border-color: #4285F4; background: #f8faff; }
         .selected-answer { background: #e8f0fe; border-color: #4285F4; box-shadow: 0 4px 0 #4285F4; }
         .selected-answer::before { background: #4285F4; color: white; }
-        
-        .start-screen, .results-container { text-align: center; animation: fadeIn 1s ease forwards; }
-        .complete-title { color: #4285f4; font-size: 2.2em; margin-bottom: 25px; font-weight: 800; }
-        .trophy-icon, .trophy-container { font-size: 4em; margin-bottom: 10px; display: inline-block; animation: pulseZoom 2s ease-in-out infinite; }
-        
-        .performance-card { background: #4285f4; color: white; border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(66, 133, 244, 0.3); }
-        .perf-label { font-size: 0.9em; font-weight: 600; opacity: 0.9; }
-        .rank-value { font-size: 2.5em; font-weight: 900; margin: 5px 0; }
-        .accuracy-label { font-size: 1em; font-weight: 600; opacity: 0.9; }
-        
-        .restart-btn { background: #34A853; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 800; font-size: 1em; cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(52, 168, 83, 0.3); }
-        .restart-btn:hover { transform: scale(1.05); }
         
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes pulseZoom { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
