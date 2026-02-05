@@ -12,8 +12,6 @@ export default function Dashboard() {
   const [passcode, setPasscode] = useState("");
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
-  
-  // 🟢 NEW STATS OBJECT
   const [stats, setStats] = useState({ activeUsers: 0, sessionCounts: {} });
 
   const [currentSessionCode, setCurrentSessionCode] = useState(null);
@@ -37,7 +35,6 @@ export default function Dashboard() {
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
 
-    // 🟢 LISTEN FOR STATS
     socket.on("admin:stats", (data) => {
       setStats({ 
         activeUsers: data.activeUsers, 
@@ -205,7 +202,6 @@ export default function Dashboard() {
                 <div className="session-meta">
                   <span className="code-pill">{s.sessionCode}</span>
                   <span className={`badge ${s.status}`}>{s.status}</span>
-                  {/* 🟢 SHOW PLAYER COUNT PER SESSION */}
                   <span className="player-count">👥 {stats.sessionCounts[s.sessionCode] || 0}</span>
                 </div>
               </div>
@@ -232,11 +228,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 🟢 GLOBAL STATS (Subtracted 1 for Admin) */}
+        {/* 🟢 GLOBAL STATS (CORRECTED) */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
-            <div className="stat-value">{Math.max(0, stats.activeUsers - 1)}</div>
+            {/* Show raw count, as we now filter unique players */}
+            <div className="stat-value">{stats.activeUsers}</div>
             <div className="stat-label">Total Connections</div>
           </div>
           <div className="stat-card">
@@ -246,13 +243,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Manager View (Kept same) */}
+        {/* Manager View */}
         {!managerView ? (
           <div className="card">
-            <div className="placeholder-content">
-              <div className="placeholder-icon">📋</div>
-              <div className="placeholder-text">Select a session to manage questions</div>
-            </div>
+            <div className="placeholder-content"><div className="placeholder-icon">📋</div><div className="placeholder-text">Select a session to manage questions</div></div>
           </div>
         ) : (
           <div>
@@ -260,7 +254,6 @@ export default function Dashboard() {
               <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{currentSessionCode}</span></h2>
               <button className="btn-grey" onClick={closeManager}>Close</button>
             </div>
-            {/* Same Question UI ... */}
             <div className="card">
               <h3>Add New Question</h3>
               <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1rem", padding: "16px" }} />

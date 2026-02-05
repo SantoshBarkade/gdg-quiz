@@ -38,7 +38,6 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
-// 🟢 HELPER: Count UNIQUE Participants (Deduplicate tabs & Ignore Admin)
 const getUniqueCountInRoom = (room) => {
   const ids = io.sockets.adapter.rooms.get(room);
   if (!ids) return 0;
@@ -46,7 +45,6 @@ const getUniqueCountInRoom = (room) => {
   const uniqueParticipants = new Set();
   for (const id of ids) {
     const socket = io.sockets.sockets.get(id);
-    // Only count if they have a participantId (Players)
     if (socket && socket.participantId) {
       uniqueParticipants.add(socket.participantId);
     }
@@ -59,12 +57,10 @@ const getAdminStats = () => {
   const allUniquePlayers = new Set();
 
   for (const [room, ids] of io.sockets.adapter.rooms) {
-    // Check if room looks like a Session Code (Uppercase, 6 chars etc)
     if (room.length <= 10 && room === room.toUpperCase()) {
        const count = getUniqueCountInRoom(room);
        sessionCounts[room] = count;
        
-       // Add to global set
        const roomIds = io.sockets.adapter.rooms.get(room);
        if(roomIds) {
          for(const id of roomIds) {
@@ -75,7 +71,7 @@ const getAdminStats = () => {
     }
   }
   return {
-    activeUsers: allUniquePlayers.size, // Truly unique players only
+    activeUsers: allUniquePlayers.size,
     sessionCounts 
   };
 };
@@ -88,17 +84,12 @@ io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
   broadcastStats();
 
-  // 🟢 JOIN SESSION: Now accepts participantId to tag the socket
   socket.on("join:session", (code, participantId) => {
     if (code) {
       const cleanCode = String(code).trim().toUpperCase();
-      
-      // Tag Socket
       if (participantId) socket.participantId = participantId;
-      
       socket.join(cleanCode);
       
-      // Update Lobby with UNIQUE count
       const uniqueCount = getUniqueCountInRoom(cleanCode);
       io.to(cleanCode).emit("session:update", Array(uniqueCount).fill({})); 
       
@@ -133,7 +124,7 @@ io.on("connection", (socket) => {
             total: allQuestions.length,
             time: remainingTime,
             question: {
-              _id: question._id,
+              _id: question._id.toString(), // 🟢 EXPLICIT STRING CAST
               questionText: question.questionText,
               options: question.options.map(o => ({ text: o.text })),
             },

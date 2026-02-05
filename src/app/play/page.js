@@ -37,9 +37,7 @@ export default function GamePlay() {
     setPlayer((prev) => ({ ...prev, name: name || "Player" }));
     setView("LOBBY");
 
-    // 🟢 PASS PARTICIPANT ID (pId) FOR UNIQUE COUNTING
     socket.emit("join:session", code, pId);
-    
     socket.emit("sync:state", code);
 
     socket.on("game:question", handleNewQuestion);
@@ -52,9 +50,8 @@ export default function GamePlay() {
       router.push("/");
     });
     
-    // On Reconnect
     socket.on("connect", () => {
-      socket.emit("join:session", code, pId); // Pass pId here too
+      socket.emit("join:session", code, pId);
       socket.emit("sync:state", code);
     });
 
@@ -99,7 +96,6 @@ export default function GamePlay() {
 
   const handleRanks = (rankList) => {
     setLeaderboard(rankList);
-    // 🟢 LATE JOINER FIX: Force out of lobby if ranks received
     if (view === "LOBBY" || view === "LOADING") {
        setView("RESULT");
     }
@@ -178,20 +174,22 @@ export default function GamePlay() {
     2 * Math.PI * 45 -
     (totalTime > 0 ? timeLeft / totalTime : 0) * (2 * Math.PI * 45);
 
-  if (view === "LOADING")
-    return (
-      <div className="min-h-screen flex items-center justify-center text-xl font-bold text-gray-500">
-        Loading Game...
-      </div>
-    );
-
   return (
     <div className="main-body">
-      {/* 🟢 NEW: Background Grid Layer */}
+      {/* 🟢 ALWAYS VISIBLE GRID */}
       <div className="background-grid"></div>
 
       <div className="container">
         <div className="quiz-card">
+          
+          {/* 🟢 LOADING STATE (Now inside the card) */}
+          {view === "LOADING" && (
+            <div className="start-screen" style={{textAlign: 'center', padding: '40px'}}>
+               <div className="loader-spinner"></div>
+               <h2 style={{color: '#666', marginTop: '20px'}}>Connecting...</h2>
+            </div>
+          )}
+
           {view === "LOBBY" && (
             <div className="start-screen">
               <h1>🎯 GDG Quiz</h1>
@@ -382,7 +380,7 @@ export default function GamePlay() {
           overflow: hidden;
         }
 
-        /* 🟢 NEW: Dot Grid Background */
+        /* 🟢 GRID BACKGROUND */
         .background-grid {
           position: absolute;
           inset: 0;
@@ -405,12 +403,23 @@ export default function GamePlay() {
           border-radius: 20px;
           padding: 40px;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-          /* 🟢 NEW: Border Matching Website Theme */
           border: 1px solid #e5e7eb;
-          border-top: 6px solid #4285f4; /* Google Blue Accent */
+          border-top: 6px solid #4285F4;
         }
 
-        /* Review Section */
+        /* 🟢 LOADER SPINNER */
+        .loader-spinner {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #4285F4;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ... existing styles ... */
         .review-section {
           border-top: 2px dashed #e0e0e0;
           padding-top: 20px;
