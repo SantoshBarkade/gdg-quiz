@@ -74,15 +74,14 @@ function UserJoinContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans p-4 relative overflow-hidden">
-      {/* 🟢 UPDATED: Linear Grid Background */}
+    <div className="min-h-screen flex items-center justify-center bg-white font-sans p-4 relative overflow-hidden">
+      {/* 🟢 Linear Grid Background */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
-          backgroundColor: "#ffffff",
           backgroundImage: `
-            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
+            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px)
           `,
           backgroundSize: "40px 40px",
         }}></div>
@@ -92,10 +91,11 @@ function UserJoinContent() {
         style={{ borderTop: "6px solid #4285F4" }}
       >
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
-            🚀
+          {/* 🟢 CHANGED: Replaced Emoji with Logo Image */}
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100 p-2">
+            <img src="/assests/logo.png" alt="GDG Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Join the Quiz</h1>
+          <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>Join the Quiz</h1>
           <p className="text-gray-500 text-sm mt-1">
             Enter your details to enter the arena
           </p>
@@ -154,39 +154,34 @@ function UserJoinContent() {
           </Link>
         </div>
       </div>
+      
+      {/* 🟢 Load Fonts */}
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+      
       <style jsx global>{`
+        body { font-family: 'Poppins', sans-serif; }
         @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-up {
-          animation: fadeUp 0.5s ease-out forwards;
-        }
+        .animate-fade-up { animation: fadeUp 0.5s ease-out forwards; }
       `}</style>
     </div>
   );
 }
 
-// 🟢 UPDATED: Loading Grid to match
 const LoadingGrid = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans p-4 relative overflow-hidden">
-    <div
-      className="absolute inset-0 z-0 pointer-events-none"
+  <div className="min-h-screen flex items-center justify-center bg-white font-sans p-4 relative overflow-hidden">
+    <div className="absolute inset-0 z-0 pointer-events-none"
       style={{
-        backgroundColor: "#ffffff",
         backgroundImage: `
-          linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
+          linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px)
         `,
         backgroundSize: "40px 40px",
       }}></div>
     <div className="relative z-10 p-8 bg-white rounded-2xl shadow-xl border-t-4 border-blue-500">
+       <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
        <h2 className="text-gray-600 font-bold">Loading...</h2>
     </div>
   </div>

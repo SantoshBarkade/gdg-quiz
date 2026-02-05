@@ -54,12 +54,15 @@ export default function LobbyPage() {
 
   return (
     <div className="lobby-body">
-      {/* 🟢 NEW: Grid Background */}
       <div className="background-grid"></div>
 
       <div className="lobby-container">
         <header className="lobby-header">
-          <div className="logo"><span className="logo-icon">🎯</span><span className="logo-text">GDG Quiz</span></div>
+          {/* 🟢 CHANGED: Logo Image */}
+          <div className="logo">
+            <img src="/assests/logo.png" alt="GDG Logo" className="logo-img" />
+            <span className="logo-text">GDG Quiz</span>
+          </div>
           <div className="session-status"><span className="status-dot"></span><span className="status-text">{statusText}</span></div>
         </header>
 
@@ -81,27 +84,27 @@ export default function LobbyPage() {
         </main>
       </div>
 
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+
       <style jsx global>{`
-        :root { --primary: #2563eb; --bg: #f8f9fa; }
+        :root { --primary: #2563eb; --bg: #ffffff; }
         .lobby-body { 
           margin: 0; padding: 0; 
           background: var(--bg); 
           min-height: 100vh; 
           display: flex; 
           flex-direction: column; 
-          font-family: "Google Sans", sans-serif; 
+          font-family: 'Poppins', sans-serif; /* 🟢 Updated Font */
           position: relative; 
           overflow: hidden;
         }
 
-        /* 🟢 UPDATED GRID */
         .background-grid {
           position: absolute;
           inset: 0;
-          background-color: #ffffff;
           background-image:
-            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px);
           background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
@@ -113,23 +116,30 @@ export default function LobbyPage() {
           position: relative; z-index: 1; 
         }
 
-        /* ... Rest of styles identical ... */
         .lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .logo { display: flex; gap: 10px; font-size: 24px; font-weight: 800; color: #1f2937; }
-        .session-status { background: #dbeafe; color: #1e40af; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .status-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
-        .lobby-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 30px; }
-        .welcome-text h2 { font-size: 2rem; color: #333; margin: 0; }
-        .welcome-text p { color: #666; font-size: 1.1rem; margin-top: 5px; }
+        
+        .logo { display: flex; gap: 12px; align-items: center; font-size: 24px; font-weight: 800; color: #1f2937; }
+        .logo-img { height: 40px; width: auto; }
+        
+        .session-status { background: #e8f0fe; color: #1967d2; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; border: 1px solid #d2e3fc; }
+        .status-dot { width: 8px; height: 8px; background: #1a73e8; border-radius: 50%; animation: pulse 2s infinite; }
+        
+        .lobby-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 40px; }
+        .welcome-text h2 { font-size: 2.5rem; color: #202124; margin: 0; font-weight: 700; }
+        .welcome-text p { color: #5f6368; font-size: 1.1rem; margin-top: 5px; }
         .highlight { color: #2563eb; }
-        .count-card { position: relative; width: 200px; height: 200px; background: white; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 40px rgba(37, 99, 235, 0.2); z-index: 2; }
+        
+        .count-card { position: relative; width: 220px; height: 220px; background: white; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 10px 40px rgba(37, 99, 235, 0.15); z-index: 2; border: 6px solid #f8f9fa; }
         .count-number { font-size: 5rem; font-weight: 800; color: #2563eb; line-height: 1; }
-        .count-label { font-size: 1rem; color: #6b7280; font-weight: 600; margin-top: 5px; }
+        .count-label { font-size: 1rem; color: #5f6368; font-weight: 600; margin-top: 5px; }
+        
         .pulse-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #2563eb; animation: ripple 2s infinite; z-index: 1; }
-        .instruction-text { max-width: 400px; color: #6b7280; line-height: 1.5; background: rgba(255, 255, 255, 0.8); padding: 15px; border-radius: 12px; }
+        
+        .instruction-text { max-width: 400px; color: #5f6368; line-height: 1.6; background: rgba(255, 255, 255, 0.9); padding: 15px 25px; border-radius: 50px; border: 1px solid #e0e0e0; font-weight: 500; }
+        
         @keyframes pulse { 50% { opacity: 0.5; } }
-        @keyframes ripple { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-        @media (max-width: 768px) { .count-number { font-size: 4rem; } .count-card { width: 160px; height: 160px; } }
+        @keyframes ripple { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+        @media (max-width: 768px) { .count-number { font-size: 4rem; } .count-card { width: 180px; height: 180px; } }
       `}</style>
     </div>
   );

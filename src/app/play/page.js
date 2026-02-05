@@ -176,7 +176,7 @@ export default function GamePlay() {
 
   return (
     <div className="main-body">
-      {/* 🟢 UPDATED GRID BACKGROUND */}
+      {/* 🟢 NEW: Grid Background (Matches Page.js) */}
       <div className="background-grid"></div>
 
       <div className="container">
@@ -191,7 +191,11 @@ export default function GamePlay() {
 
           {view === "LOBBY" && (
             <div className="start-screen">
-              <h1>🎯 GDG Quiz</h1>
+              {/* 🟢 CHANGED: Logo Image */}
+              <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
+                 <img src="/assests/logo.png" alt="Logo" style={{height: '60px'}} />
+              </div>
+              <h1>GDG Quiz</h1>
               <p className="start-screen-subtitle">
                 Welcome,{" "}
                 <span style={{ color: "#2563eb", fontWeight: "bold" }}>
@@ -274,7 +278,9 @@ export default function GamePlay() {
               <div className="performance-message" style={{ marginBottom: "20px" }}>
                 Correct Answer: <strong>{result.correctAnswer}</strong>
               </div>
-              <div className="stats-row" style={{ marginBottom: "20px" }}>
+              
+              {/* 🟢 CHANGED: Stats are now Centered */}
+              <div className="stats-row" style={{ marginBottom: "20px", justifyContent: 'center' }}>
                 <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}>
                   <div className="stat-num" style={{ color: "#4285F4" }}>
                     {player.score}
@@ -298,24 +304,24 @@ export default function GamePlay() {
             <div className="results-container">
               <div className="trophy-icon">🏆</div>
               <h2 className="complete-title">Quiz Complete!</h2>
+              
+              {/* 🟢 CHANGED: Updated Leaderboard Styling (No Gold/Silver/Bronze metallic) */}
               <div className="leaderboard-card">
                 <div className="leaderboard-header">Top Winners</div>
                 <div className="leaderboard-list">
                   {winners.map((w, idx) => (
                     <div
                       key={idx}
-                      className={`leader-item ${
-                        idx === 0 ? "gold" : idx === 1 ? "silver" : idx === 2 ? "bronze" : ""
-                      }`}
+                      className={`leader-item rank-${idx + 1}`}
                     >
-                      <span>
-                        #{idx + 1} {w.name}
-                      </span>
+                      <div className="rank-badge">{idx + 1}</div>
+                      <span className="player-name">{w.name}</span>
                       <span className="pts">{w.score} pts</span>
                     </div>
                   ))}
                 </div>
               </div>
+
               <div className="performance-card">
                 <div className="perf-label">Your Performance</div>
                 <div className="rank-value">
@@ -363,52 +369,99 @@ export default function GamePlay() {
           )}
         </div>
       </div>
+      
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+
       <style jsx global>{`
-        * {
-          box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         .main-body {
-          font-family: "Segoe UI", sans-serif;
-          background: #f8f9fa; /* Fallback */
+          font-family: 'Poppins', sans-serif; /* 🟢 Font Update */
+          background: #ffffff;
           min-height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
           padding: 20px;
-          position: relative; /* Context for absolute bg */
+          position: relative;
           overflow: hidden;
         }
 
-        /* 🟢 GRID BACKGROUND */
         .background-grid {
           position: absolute;
           inset: 0;
-          background-color: #ffffff;
           background-image:
-            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px);
           background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
         }
 
-        .container {
-          max-width: 800px;
-          width: 100%;
-          position: relative; /* Sit above background */
-          z-index: 1;
-        }
+        .container { max-width: 800px; width: 100%; position: relative; z-index: 1; }
 
         .quiz-card {
           background: white;
-          border-radius: 20px;
+          border-radius: 24px;
           padding: 40px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-          border: 1px solid #e5e7eb;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+          border: 1px solid #f0f0f0;
           border-top: 6px solid #4285F4;
         }
 
-        /* 🟢 LOADER SPINNER */
+        /* 🟢 Leaderboard Styles (GDG Theme) */
+        .leaderboard-card {
+          border: 1px solid #e0e0e0;
+          border-radius: 16px;
+          padding: 0;
+          margin-bottom: 25px;
+          overflow: hidden;
+        }
+        .leaderboard-header {
+          background: #f8f9fa;
+          padding: 15px;
+          font-weight: 800;
+          color: #4285F4;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          border-bottom: 1px solid #eee;
+        }
+        .leaderboard-list {
+          padding: 10px;
+          max-height: 250px;
+          overflow-y: auto;
+        }
+        .leader-item {
+          display: flex;
+          align-items: center;
+          padding: 12px 15px;
+          margin-bottom: 8px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #f0f0f0;
+          transition: transform 0.2s;
+        }
+        .leader-item:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        
+        .rank-badge {
+          width: 30px; height: 30px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-weight: bold; color: white;
+          margin-right: 15px;
+          flex-shrink: 0;
+        }
+        .rank-1 .rank-badge { background: #4285F4; } /* Blue */
+        .rank-2 .rank-badge { background: #EA4335; } /* Red */
+        .rank-3 .rank-badge { background: #FBBC05; } /* Yellow */
+        .rank-1, .rank-2, .rank-3 { border-left-width: 4px; }
+        .rank-1 { border-left-color: #4285F4; }
+        .rank-2 { border-left-color: #EA4335; }
+        .rank-3 { border-left-color: #FBBC05; }
+        .rank-4 .rank-badge, .rank-5 .rank-badge { background: #34A853; } /* Green for others */
+
+        .player-name { flex: 1; font-weight: 600; text-align: left; }
+        .pts { font-weight: 800; color: #5f6368; }
+
         .loader-spinner {
           border: 4px solid #f3f3f3;
           border-top: 4px solid #4285F4;
@@ -420,361 +473,66 @@ export default function GamePlay() {
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* ... existing styles ... */
-        .review-section {
-          border-top: 2px dashed #e0e0e0;
-          padding-top: 20px;
-          margin-top: 20px;
-          text-align: left;
-        }
-        .review-list {
-          max-height: 400px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .review-card {
-          padding: 15px;
-          border-radius: 12px;
-          border: 1px solid #eee;
-          background: #fafafa;
-        }
-        .rev-correct {
-          border-left: 5px solid #34a853;
-          background: #f0fdf4;
-        }
-        .rev-wrong {
-          border-left: 5px solid #ea4335;
-          background: #fef2f2;
-        }
-        .rev-header {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 8px;
-          font-weight: bold;
-          font-size: 0.9em;
-        }
-        .q-badge {
-          background: #eee;
-          padding: 2px 8px;
-          border-radius: 4px;
-          color: #555;
-        }
-        .rev-q-text {
-          font-weight: 600;
-          margin-bottom: 10px;
-          color: #333;
-          font-size: 1rem;
-        }
-        .rev-ans-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          font-size: 0.9em;
-        }
-        .rev-box {
-          padding: 5px 10px;
-          border-radius: 6px;
-        }
-        .user-box {
-          background: #fff;
-          border: 1px solid #ddd;
-        }
-        .correct-box {
-          background: #e6fffa;
-          border: 1px solid #b2f5ea;
-          color: #047481;
-          font-weight: bold;
-        }
-
-        /* Leaderboard & Stats */
-        .leaderboard-list {
-          max-height: 250px;
-          overflow-y: auto;
-        }
-        .leader-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 10px;
-          margin-bottom: 5px;
-          background: #f9f9f9;
-          border-radius: 8px;
-        }
-        .gold {
-          background: #fff8e1;
-          border: 1px solid #ffc107;
-        }
-        .silver {
-          background: #f5f5f5;
-          border: 1px solid #ccc;
-        }
-        .bronze {
-          background: #fbe9e7;
-          border: 1px solid #ff7043;
-        }
-        .stats-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
-        }
-        .mini-stat {
-          padding: 10px;
-          border-radius: 10px;
-          background: #f5f5f5;
-          text-align: center;
-        }
-        .correct-val {
-          color: #34a853;
-          font-weight: bold;
-          font-size: 1.5em;
-        }
-        .incorrect-val {
-          color: #ea4335;
-          font-weight: bold;
-          font-size: 1.5em;
-        }
-        .timeout-val {
-          color: #fbbc05;
-          font-weight: bold;
-          font-size: 1.5em;
-        }
+        /* Review Section */
+        .review-section { border-top: 2px dashed #e0e0e0; padding-top: 20px; margin-top: 20px; text-align: left; }
+        .review-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .review-card { padding: 15px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; }
+        .rev-correct { border-left: 5px solid #34A853; background: #f0fdf4; }
+        .rev-wrong { border-left: 5px solid #EA4335; background: #fef2f2; }
+        .rev-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 0.9em; }
+        .q-badge { background: #eee; padding: 2px 8px; border-radius: 4px; color: #555; }
+        .rev-q-text { font-weight: 600; margin-bottom: 10px; color: #333; font-size: 1rem; }
+        .rev-ans-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em; }
+        .rev-box { padding: 5px 10px; border-radius: 6px; }
+        .user-box { background: #fff; border: 1px solid #ddd; }
+        .correct-box { background: #e6fffa; border: 1px solid #b2f5ea; color: #047481; font-weight: bold; }
+        
+        .stats-row { display: flex; gap: 15px; } /* 🟢 Flex instead of grid for centering */
+        .mini-stat { padding: 15px 25px; border-radius: 16px; background: #f5f5f5; text-align: center; border: 1px solid transparent; min-width: 120px; }
+        .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 5px; }
+        .stat-text { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
         /* Timer & Progress */
-        .timer-circle-container {
-          position: relative;
-          width: 80px;
-          height: 80px;
-        }
-        .timer-svg {
-          position: absolute;
-          top: 0;
-          left: 0;
-        }
-        .timer-circle-bg {
-          fill: none;
-          stroke: #e0e0e0;
-          stroke-width: 4;
-        }
-        .timer-circle-progress {
-          fill: none;
-          stroke: #4285f4;
-          stroke-width: 4;
-          stroke-linecap: round;
-          stroke-dasharray: 282.7;
-          transition: stroke-dashoffset 1s linear;
-          transform: rotate(-90deg);
-          transform-origin: 50% 50%;
-        }
-        .timer-circle-progress.warning {
-          stroke: #f39c12;
-        }
-        .timer-circle-progress.danger {
-          stroke: #eb3349;
-        }
-        .timer-text {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .timer-number {
-          font-size: 1.8em;
-          font-weight: 700;
-          color: #34a853;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-        }
-        .progress-container {
-          margin-bottom: 30px;
-        }
-        .progress-info {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 15px;
-        }
-        .progress-bar {
-          width: 100%;
-          height: 10px;
-          background: #e0e0e0;
-          border-radius: 10px;
-          overflow: hidden;
-        }
-        .progress-fill {
-          height: 100%;
-          background: #34a853;
-          transition: width 0.5s ease;
-        }
-
+        .timer-circle-container { position: relative; width: 80px; height: 80px; }
+        .timer-svg { position: absolute; top: 0; left: 0; }
+        .timer-circle-bg { fill: none; stroke: #e0e0e0; stroke-width: 4; }
+        .timer-circle-progress { fill: none; stroke: #4285f4; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 282.7; transition: stroke-dashoffset 1s linear; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        .timer-circle-progress.warning { stroke: #f39c12; }
+        .timer-circle-progress.danger { stroke: #eb3349; }
+        .timer-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .timer-number { font-size: 1.8em; font-weight: 700; color: #34a853; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .progress-container { margin-bottom: 30px; }
+        .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #34a853; transition: width 0.5s ease; }
+        
         /* Buttons & Text */
-        .question-counter {
-          background: #ea4335;
-          color: white;
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-weight: 600;
-        }
-        .score-display-top {
-          color: #34a853;
-          font-weight: 600;
-          padding: 8px 16px;
-          background: rgba(52, 168, 83, 0.1);
-          border-radius: 20px;
-        }
-        .question-text {
-          font-size: 1.5em;
-          color: #333;
-          margin-bottom: 30px;
-          font-weight: 600;
-          text-align: center;
-        }
-        .answers-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-        }
-        .answer-btn {
-          padding: 20px;
-          border: 2px solid #a4b1ff;
-          background: white;
-          border-radius: 12px;
-          font-size: 1.1em;
-          cursor: pointer;
-          transition: all 0.2s;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 15px;
-        }
-        .answer-btn::before {
-          content: attr(data-option);
-          width: 30px;
-          height: 30px;
-          background: #4285f4;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .answer-btn:hover {
-          background: #f8f9ff;
-        }
-        .selected-answer {
-          background: #e0f2fe;
-          border-color: #2563eb;
-        }
-        .start-screen,
-        .results-container {
-          text-align: center;
-          animation: fadeIn 1s ease forwards;
-        }
-        .complete-title {
-          color: #4285f4;
-          font-size: 2.2em;
-          margin-bottom: 25px;
-          font-weight: 800;
-        }
-        .trophy-icon,
-        .trophy-container {
-          font-size: 4em;
-          margin-bottom: 10px;
-          display: inline-block;
-          animation: pulseZoom 2s ease-in-out infinite;
-        }
-        .leaderboard-card {
-          border: 4px solid #9eabf5;
-          border-radius: 15px;
-          padding: 15px;
-          margin-bottom: 25px;
-        }
-        .leaderboard-header {
-          font-weight: 800;
-          margin-bottom: 12px;
-          font-size: 0.9em;
-          color: #333;
-        }
-        .performance-card {
-          background: #4285f4;
-          color: white;
-          border-radius: 15px;
-          padding: 25px;
-          margin-bottom: 25px;
-          border: 2px solid #141414;
-        }
-        .perf-label {
-          font-size: 0.9em;
-          font-weight: 600;
-          opacity: 0.9;
-        }
-        .rank-value {
-          font-size: 2.5em;
-          font-weight: 900;
-          margin: 5px 0;
-        }
-        .accuracy-label {
-          font-size: 1em;
-          font-weight: 600;
-          opacity: 0.9;
-        }
-        .restart-btn {
-          background: #4285f4;
-          color: white;
-          border: none;
-          padding: 15px 40px;
-          border-radius: 30px;
-          font-weight: 800;
-          font-size: 1em;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-        .restart-btn:hover {
-          transform: scale(1.05);
-        }
-        @keyframes fadeIn {
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes pulseZoom {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.15);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-        @keyframes pulseZoom1 {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.25);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-        @media (max-width: 600px) {
-          .answers-grid,
-          .stats-row {
-            grid-template-columns: 1fr;
-          }
-          .quiz-card {
-            padding: 20px;
-          }
-        }
+        .question-counter { background: #ea4335; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
+        .score-display-top { color: #34a853; font-weight: 600; padding: 8px 16px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; }
+        .question-text { font-size: 1.5em; color: #333; margin-bottom: 30px; font-weight: 600; text-align: center; }
+        .answers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .answer-btn { padding: 20px; border: 2px solid #e0e0e0; background: white; border-radius: 16px; font-size: 1.1em; cursor: pointer; transition: all 0.2s; font-weight: 600; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 0 #e0e0e0; }
+        .answer-btn:active { transform: translateY(4px); box-shadow: none; }
+        .answer-btn::before { content: attr(data-option); width: 30px; height: 30px; background: #f1f3f4; color: #5f6368; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 800; }
+        .answer-btn:hover { border-color: #4285F4; background: #f8faff; }
+        .selected-answer { background: #e8f0fe; border-color: #4285F4; box-shadow: 0 4px 0 #4285F4; }
+        .selected-answer::before { background: #4285F4; color: white; }
+        
+        .start-screen, .results-container { text-align: center; animation: fadeIn 1s ease forwards; }
+        .complete-title { color: #4285f4; font-size: 2.2em; margin-bottom: 25px; font-weight: 800; }
+        .trophy-icon, .trophy-container { font-size: 4em; margin-bottom: 10px; display: inline-block; animation: pulseZoom 2s ease-in-out infinite; }
+        
+        .performance-card { background: #4285f4; color: white; border-radius: 16px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(66, 133, 244, 0.3); }
+        .perf-label { font-size: 0.9em; font-weight: 600; opacity: 0.9; }
+        .rank-value { font-size: 2.5em; font-weight: 900; margin: 5px 0; }
+        .accuracy-label { font-size: 1em; font-weight: 600; opacity: 0.9; }
+        
+        .restart-btn { background: #34A853; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 800; font-size: 1em; cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 15px rgba(52, 168, 83, 0.3); }
+        .restart-btn:hover { transform: scale(1.05); }
+        
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes pulseZoom { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @media (max-width: 600px) { .answers-grid, .stats-row { grid-template-columns: 1fr; } .quiz-card { padding: 20px; } }
       `}</style>
     </div>
   );
