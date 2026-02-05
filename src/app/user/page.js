@@ -80,8 +80,8 @@ function UserJoinContent() {
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           backgroundImage: `
-            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px)
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
           `,
           backgroundSize: "40px 40px",
         }}></div>
@@ -91,10 +91,13 @@ function UserJoinContent() {
         style={{ borderTop: "6px solid #4285F4" }}
       >
         <div className="text-center mb-8">
-          {/* 🟢 CHANGED: Replaced Emoji with Logo Image */}
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-gray-100 p-2">
-            <img src="/assests/logo.png" alt="GDG Logo" className="w-full h-full object-contain" />
-          </div>
+          {/* 🟢 CHANGED: Larger Logo Image */}
+          <img 
+            src="/assests/logo.png" 
+            alt="GDG Logo" 
+            className="mx-auto mb-4" 
+            style={{ height: '80px', width: 'auto' }} 
+          />
           <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Poppins, sans-serif' }}>Join the Quiz</h1>
           <p className="text-gray-500 text-sm mt-1">
             Enter your details to enter the arena
@@ -175,8 +178,8 @@ const LoadingGrid = () => (
     <div className="absolute inset-0 z-0 pointer-events-none"
       style={{
         backgroundImage: `
-          linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
-          linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px)
+          linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
         `,
         backgroundSize: "40px 40px",
       }}></div>

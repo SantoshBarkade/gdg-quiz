@@ -11,23 +11,19 @@ function LeaderboardContent() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- 1. SOCKET & DATA LOGIC (Existing Feature) ---
   useEffect(() => {
     if (!code) return;
 
-    // Join the session room
     socket.emit("join:session", code);
 
-    // Listen for live rank updates
     socket.on("game:ranks", (data) => {
       const sorted = data.sort((a, b) => b.score - a.score);
       setLeaderboard(sorted);
       setLoading(false);
     });
 
-    // Listen for game over
     socket.on("game:over", () => {
-      launchConfetti();
+      // Optional confetti logic here
     });
 
     return () => {
@@ -36,264 +32,217 @@ function LeaderboardContent() {
     };
   }, [code, socket]);
 
-  // --- 2. CONFETTI EFFECT (From your HTML) ---
-  const launchConfetti = () => {
-    const colors = ["#ff4d4d", "#4d79ff", "#ffd24d", "#4dff88", "#c44dff"];
-    const board = document.getElementById("board");
-    if (!board) return;
-
-    for (let i = 0; i < 50; i++) {
-      const c = document.createElement("div");
-      c.className = "confetti";
-      c.style.left = Math.random() * 100 + "%";
-      c.style.backgroundColor =
-        colors[Math.floor(Math.random() * colors.length)];
-      c.style.animationDelay = Math.random() * 0.4 + "s";
-      board.appendChild(c);
-
-      setTimeout(() => c.remove(), 3000);
-    }
+  // Helper to get Medal Icon
+  const getRankIcon = (index) => {
+    if (index === 0) return "🥇";
+    if (index === 1) return "🥈";
+    if (index === 2) return "🥉";
+    return `#${index + 1}`;
   };
-
-  // Trigger confetti on load
-  useEffect(() => {
-    const timer = setTimeout(launchConfetti, 300);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
     <div className="leaderboard-body">
+      <div className="background-grid"></div>
+
       <div className="leaderboard-card" id="board">
-        {/* TROPHY */}
-        <div className="trophy">
-          <span>🏆</span>
+        {/* HEADER */}
+        <div className="header">
+          <div className="logo-container">
+             <img src="/assests/logo.png" alt="GDG Logo" className="logo-img" />
+          </div>
+          <h1>Live Leaderboard</h1>
+          {code && <div className="session-badge">Session: {code}</div>}
         </div>
 
-        <h2>{loading ? `Waiting for Players...` : "Live Leaderboard"}</h2>
-
-        {code && (
-          <div
-            style={{
-              textAlign: "center",
-              marginBottom: "15px",
-              color: "#4f6bed",
-              fontSize: "14px",
-              fontWeight: "600",
-            }}>
-            Session: {code}
-          </div>
-        )}
-
         {/* LIST */}
-        <div className="list">
-          {leaderboard.length === 0 && !loading ? (
-            <div
-              style={{ textAlign: "center", padding: "20px", color: "#999" }}>
-              No players yet
+        <div className="list-container">
+          {loading ? (
+            <div className="loading-state">
+               <div className="spinner"></div>
+               <p>Waiting for players...</p>
             </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="empty-state">No players have joined yet.</div>
           ) : (
-            leaderboard.map((user, index) => (
-              <div
-                key={user.id || index}
-                className="card"
-                style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="left">
-                  <div className="rank">#{index + 1}</div>
-                  {/* Dynamic Avatar based on name */}
-                  <div
-                    className="avatar"
-                    style={{
-                      backgroundImage: `url('https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}')`,
-                      backgroundColor: "#fff",
-                    }}></div>
-                  <div className="name">{user.name}</div>
+            <div className="list">
+              {leaderboard.map((user, index) => (
+                <div
+                  key={user.id || index}
+                  className={`card rank-${index + 1}`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="left">
+                    <div className="rank-badge">{getRankIcon(index)}</div>
+                    <div className="avatar-placeholder">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="name">{user.name}</div>
+                  </div>
+                  <div className="score">
+                    {user.score} <span className="pts-label">pts</span>
+                  </div>
                 </div>
-                <div className="score">{user.score} pts</div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        {/* FOOTER */}
-        <div className="footer">🎉 Congratulations to all participants!</div>
+        <div className="footer">
+          GDG Quiz • Smt. Kashibai Navale College of Engineering
+        </div>
       </div>
 
-      {/* STYLES (Exact match to your HTML) */}
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+
       <style jsx global>{`
+        * { box-sizing: border-box; }
+        
         .leaderboard-body {
           min-height: 100vh;
           width: 100%;
-          background: linear-gradient(135deg, #f6f9ff, #e9f0ff);
+          background: #ffffff;
           display: flex;
           justify-content: center;
           align-items: center;
-          background-image:
-            linear-gradient(
-              to right,
-              rgba(8, 75, 162, 0.12) 1px,
-              transparent 1px
-            ),
-            linear-gradient(
-              to bottom,
-              rgba(8, 75, 162, 0.12) 1px,
-              transparent 1px
-            );
-          background-size: 40px 40px;
-          font-family: "Segoe UI", Tahoma, sans-serif;
-          margin: 0;
-          padding: 0;
-        }
-
-        /* MAIN CARD */
-        .leaderboard-card {
-          width: 680px;
-          background: #ffffff;
-          border: 3px solid #000;
-          border-radius: 18px;
-          padding: 26px;
-          box-shadow:
-            0 10px 0 rgba(0, 0, 0, 0.15),
-            0 25px 50px rgba(0, 0, 0, 0.25);
+          font-family: "Poppins", sans-serif;
           position: relative;
           overflow: hidden;
-          margin: 20px;
         }
 
-        /* TROPHY */
-        .trophy {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 10px;
+        .background-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+          background-size: 40px 40px;
+          z-index: 0;
+          pointer-events: none;
         }
 
-        .trophy span {
-          font-size: 56px;
-          animation: trophyZoom 2s ease-in-out infinite;
-          display: block;
-        }
-
-        @keyframes trophyZoom {
-          0%,
-          100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.18);
-          }
-        }
-
-        h2 {
-          text-align: center;
-          color: #4f6bed;
-          margin-bottom: 18px;
-          margin-top: 0;
-        }
-
-        /* LIST */
-        .list {
+        .leaderboard-card {
+          width: 800px;
+          max-width: 95%;
+          background: #ffffff;
+          border-radius: 24px;
+          border: 1px solid #e0e0e0;
+          border-top: 8px solid #4285F4;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+          position: relative;
+          z-index: 1;
           display: flex;
           flex-direction: column;
-          gap: 12px;
-          min-height: 100px;
+          max-height: 90vh;
         }
+
+        .header {
+          padding: 30px;
+          text-align: center;
+          border-bottom: 1px solid #f0f0f0;
+          background: #fdfdfd;
+          border-radius: 24px 24px 0 0;
+        }
+
+        .logo-img { height: 60px; margin-bottom: 10px; }
+        
+        h1 { margin: 0; color: #202124; fontSize: 2rem; fontWeight: 800; }
+
+        .session-badge {
+          display: inline-block;
+          margin-top: 10px;
+          background: #e8f0fe;
+          color: #1967d2;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+
+        .list-container {
+          flex: 1;
+          overflow-y: auto;
+          padding: 20px 30px;
+          background: #fff;
+        }
+
+        .list { display: flex; flex-direction: column; gap: 10px; }
 
         .card {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #f7f8ff;
-          border-radius: 12px;
-          padding: 10px 14px;
+          padding: 15px 20px;
+          border-radius: 16px;
+          background: #fff;
+          border: 1px solid #f1f3f4;
+          transition: transform 0.2s, box-shadow 0.2s;
+          animation: slideIn 0.5s ease forwards;
           opacity: 0;
-          animation: slideUp 0.6s ease forwards;
         }
 
-        /* Top 3 Colors */
-        .card:nth-child(1) {
-          background: #fff3c4;
+        /* 🟢 MEDAL STYLES (Gold, Silver, Bronze) */
+        /* Gold */
+        .rank-1 { 
+          background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
+          border: 2px solid #FFD700;
+          box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+          transform: scale(1.02);
         }
-        .card:nth-child(2) {
-          background: #f1f1f1;
+        .rank-1 .rank-badge { font-size: 1.8rem; } /* Bigger emoji */
+
+        /* Silver */
+        .rank-2 { 
+          background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%);
+          border: 2px solid #C0C0C0;
+          box-shadow: 0 4px 15px rgba(192, 192, 192, 0.2);
         }
-        .card:nth-child(3) {
-          background: #ffe1cc;
+        .rank-2 .rank-badge { font-size: 1.5rem; }
+
+        /* Bronze */
+        .rank-3 { 
+          background: linear-gradient(135deg, #ffe0b2 0%, #fff 100%);
+          border: 2px solid #CD7F32;
+          box-shadow: 0 4px 15px rgba(205, 127, 50, 0.15);
+        }
+        .rank-3 .rank-badge { font-size: 1.5rem; }
+
+        .left { display: flex; align-items: center; gap: 15px; }
+
+        .rank-badge {
+          width: 40px; height: 40px;
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 800;
+          font-size: 1rem;
+          color: #5f6368;
         }
 
-        @keyframes slideUp {
-          from {
-            transform: translateY(20px);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-
-        /* LEFT SIDE */
-        .left {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .rank {
-          font-weight: 700;
-          color: #333;
-          width: 28px;
-        }
-
-        .avatar {
-          width: 38px;
-          height: 38px;
+        .avatar-placeholder {
+          width: 40px; height: 40px;
           border-radius: 50%;
-          background-size: cover;
-          background-position: center;
-          border: 2px solid #000;
-        }
-
-        .name {
-          font-size: 15px;
-          font-weight: 600;
-          color: #000;
-        }
-
-        /* SCORE */
-        .score {
-          font-size: 14px;
+          background: linear-gradient(135deg, #4285F4, #34A853);
+          color: white;
+          display: flex; align-items: center; justify-content: center;
           font-weight: 700;
-          color: #000;
+          font-size: 1.1rem;
         }
 
-        /* FOOTER */
+        .name { font-size: 1.1rem; font-weight: 600; color: #333; }
+        .score { font-size: 1.2rem; font-weight: 800; color: #333; }
+        .pts-label { font-size: 0.8rem; font-weight: 600; color: #888; margin-left: 2px; }
+
+        .loading-state, .empty-state { text-align: center; padding: 40px; color: #888; font-weight: 500; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4285F4; border-radius: 50%; margin: 0 auto 15px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .footer {
-          margin-top: 22px;
+          padding: 15px;
           text-align: center;
-          font-size: 15px;
-          font-weight: 700;
-          color: #333;
-        }
-
-        /* CONFETTI */
-        .confetti {
-          position: absolute;
-          top: -10px;
-          width: 8px;
-          height: 14px;
-          opacity: 0.9;
-          animation: fall 3s ease-out forwards;
-          z-index: 5;
-        }
-
-        @keyframes fall {
-          0% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(520px) rotate(360deg);
-            opacity: 0;
-          }
+          font-size: 0.8rem;
+          color: #999;
+          background: #fcfcfc;
+          border-radius: 0 0 24px 24px;
+          border-top: 1px solid #f0f0f0;
         }
       `}</style>
     </div>
@@ -302,12 +251,7 @@ function LeaderboardContent() {
 
 export default function LeaderboardPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          Loading Leaderboard...
-        </div>
-      }>
+    <Suspense fallback={<div>Loading...</div>}>
       <LeaderboardContent />
     </Suspense>
   );

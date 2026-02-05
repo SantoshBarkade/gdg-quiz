@@ -174,9 +174,15 @@ export default function GamePlay() {
     2 * Math.PI * 45 -
     (totalTime > 0 ? timeLeft / totalTime : 0) * (2 * Math.PI * 45);
 
+  const getRankIcon = (idx) => {
+    if (idx === 0) return "🥇";
+    if (idx === 1) return "🥈";
+    if (idx === 2) return "🥉";
+    return idx + 1;
+  };
+
   return (
     <div className="main-body">
-      {/* 🟢 NEW: Grid Background (Matches Page.js) */}
       <div className="background-grid"></div>
 
       <div className="container">
@@ -191,17 +197,12 @@ export default function GamePlay() {
 
           {view === "LOBBY" && (
             <div className="start-screen">
-              {/* 🟢 CHANGED: Logo Image */}
               <div style={{display: 'flex', justifyContent: 'center', marginBottom: '20px'}}>
                  <img src="/assests/logo.png" alt="Logo" style={{height: '60px'}} />
               </div>
               <h1>GDG Quiz</h1>
               <p className="start-screen-subtitle">
-                Welcome,{" "}
-                <span style={{ color: "#2563eb", fontWeight: "bold" }}>
-                  {player.name}
-                </span>
-                !
+                Welcome, <span style={{ color: "#2563eb", fontWeight: "bold" }}>{player.name}</span>!
               </p>
               <div className="quiz-rules">
                 <h3>Waiting for Host...</h3>
@@ -279,7 +280,6 @@ export default function GamePlay() {
                 Correct Answer: <strong>{result.correctAnswer}</strong>
               </div>
               
-              {/* 🟢 CHANGED: Stats are now Centered */}
               <div className="stats-row" style={{ marginBottom: "20px", justifyContent: 'center' }}>
                 <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}>
                   <div className="stat-num" style={{ color: "#4285F4" }}>
@@ -305,18 +305,20 @@ export default function GamePlay() {
               <div className="trophy-icon">🏆</div>
               <h2 className="complete-title">Quiz Complete!</h2>
               
-              {/* 🟢 CHANGED: Updated Leaderboard Styling (No Gold/Silver/Bronze metallic) */}
               <div className="leaderboard-card">
-                <div className="leaderboard-header">Top Winners</div>
+                <div className="leaderboard-header">Top Performers</div>
                 <div className="leaderboard-list">
                   {winners.map((w, idx) => (
                     <div
                       key={idx}
                       className={`leader-item rank-${idx + 1}`}
                     >
-                      <div className="rank-badge">{idx + 1}</div>
-                      <span className="player-name">{w.name}</span>
-                      <span className="pts">{w.score} pts</span>
+                      {/* 🟢 MEDAL ICON */}
+                      <div className="rank-badge">{getRankIcon(idx)}</div>
+                      <div className="player-info">
+                        <span className="player-name">{w.name}</span>
+                      </div>
+                      <span className="pts">{w.totalScore} pts</span>
                     </div>
                   ))}
                 </div>
@@ -330,7 +332,7 @@ export default function GamePlay() {
                 <div className="accuracy-label">Score: {player.score} pts</div>
               </div>
               <div className="review-section">
-                <h3 style={{ marginTop: "20px", marginBottom: "10px", color: "#333" }}>
+                <h3 style={{ marginTop: "20px", marginBottom: "10px", color: "#333", fontFamily: "Poppins" }}>
                   📝 Your Answers Review
                 </h3>
                 <div className="review-list">
@@ -370,12 +372,12 @@ export default function GamePlay() {
         </div>
       </div>
       
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;800&display=swap" rel="stylesheet" />
 
       <style jsx global>{`
         * { box-sizing: border-box; }
         .main-body {
-          font-family: 'Poppins', sans-serif; /* 🟢 Font Update */
+          font-family: 'Inter', sans-serif;
           background: #ffffff;
           min-height: 100vh;
           display: flex;
@@ -390,8 +392,8 @@ export default function GamePlay() {
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px);
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
           background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
@@ -408,13 +410,16 @@ export default function GamePlay() {
           border-top: 6px solid #4285F4;
         }
 
-        /* 🟢 Leaderboard Styles (GDG Theme) */
+        h1, h2, h3, .complete-title { font-family: 'Poppins', sans-serif; }
+
+        /* Leaderboard Styles (Medal Theme) */
         .leaderboard-card {
           border: 1px solid #e0e0e0;
           border-radius: 16px;
           padding: 0;
           margin-bottom: 25px;
           overflow: hidden;
+          background: #fff;
         }
         .leaderboard-header {
           background: #f8f9fa;
@@ -423,11 +428,12 @@ export default function GamePlay() {
           color: #4285F4;
           text-transform: uppercase;
           letter-spacing: 1px;
+          font-size: 0.9rem;
           border-bottom: 1px solid #eee;
         }
         .leaderboard-list {
           padding: 10px;
-          max-height: 250px;
+          max-height: 300px;
           overflow-y: auto;
         }
         .leader-item {
@@ -443,25 +449,42 @@ export default function GamePlay() {
         .leader-item:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         
         .rank-badge {
-          width: 30px; height: 30px;
-          border-radius: 50%;
+          width: 40px; height: 40px;
           display: flex; align-items: center; justify-content: center;
-          font-weight: bold; color: white;
+          font-size: 1.2rem;
+          font-weight: 800; color: #5f6368;
           margin-right: 15px;
           flex-shrink: 0;
         }
-        .rank-1 .rank-badge { background: #4285F4; } /* Blue */
-        .rank-2 .rank-badge { background: #EA4335; } /* Red */
-        .rank-3 .rank-badge { background: #FBBC05; } /* Yellow */
-        .rank-1, .rank-2, .rank-3 { border-left-width: 4px; }
-        .rank-1 { border-left-color: #4285F4; }
-        .rank-2 { border-left-color: #EA4335; }
-        .rank-3 { border-left-color: #FBBC05; }
-        .rank-4 .rank-badge, .rank-5 .rank-badge { background: #34A853; } /* Green for others */
 
-        .player-name { flex: 1; font-weight: 600; text-align: left; }
-        .pts { font-weight: 800; color: #5f6368; }
+        /* 🟢 MEDAL STYLING */
+        /* Gold */
+        .rank-1 { 
+          background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
+          border: 2px solid #FFD700;
+          box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
+        }
+        .rank-1 .rank-badge { font-size: 1.8rem; }
 
+        /* Silver */
+        .rank-2 { 
+          background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%);
+          border: 2px solid #C0C0C0;
+        }
+        .rank-2 .rank-badge { font-size: 1.5rem; }
+
+        /* Bronze */
+        .rank-3 { 
+          background: linear-gradient(135deg, #ffe0b2 0%, #fff 100%);
+          border: 2px solid #CD7F32;
+        }
+        .rank-3 .rank-badge { font-size: 1.5rem; }
+
+        .player-info { flex: 1; text-align: left; }
+        .player-name { font-weight: 600; color: #333; }
+        .pts { font-weight: 800; color: #4285F4; font-family: 'Poppins', sans-serif; }
+
+        /* ... Other existing styles ... */
         .loader-spinner {
           border: 4px solid #f3f3f3;
           border-top: 4px solid #4285F4;
@@ -473,7 +496,6 @@ export default function GamePlay() {
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Review Section */
         .review-section { border-top: 2px dashed #e0e0e0; padding-top: 20px; margin-top: 20px; text-align: left; }
         .review-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .review-card { padding: 15px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; }
@@ -487,12 +509,11 @@ export default function GamePlay() {
         .user-box { background: #fff; border: 1px solid #ddd; }
         .correct-box { background: #e6fffa; border: 1px solid #b2f5ea; color: #047481; font-weight: bold; }
         
-        .stats-row { display: flex; gap: 15px; } /* 🟢 Flex instead of grid for centering */
+        .stats-row { display: flex; gap: 15px; } 
         .mini-stat { padding: 15px 25px; border-radius: 16px; background: #f5f5f5; text-align: center; border: 1px solid transparent; min-width: 120px; }
         .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 5px; }
         .stat-text { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Timer & Progress */
         .timer-circle-container { position: relative; width: 80px; height: 80px; }
         .timer-svg { position: absolute; top: 0; left: 0; }
         .timer-circle-bg { fill: none; stroke: #e0e0e0; stroke-width: 4; }
@@ -506,7 +527,6 @@ export default function GamePlay() {
         .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: #34a853; transition: width 0.5s ease; }
         
-        /* Buttons & Text */
         .question-counter { background: #ea4335; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
         .score-display-top { color: #34a853; font-weight: 600; padding: 8px 16px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; }
         .question-text { font-size: 1.5em; color: #333; margin-bottom: 30px; font-weight: 600; text-align: center; }
