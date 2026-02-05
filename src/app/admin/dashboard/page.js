@@ -13,10 +13,9 @@ export default function Dashboard() {
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
   
-  // 🟢 NEW STATS STRUCTURE
+  // 🟢 NEW STATS STATE
   const [stats, setStats] = useState({ activeUsers: 0, sessionCounts: {} });
 
-  // ... (Other state variables: currentSessionCode, managerView, etc. - Keep as is)
   const [currentSessionCode, setCurrentSessionCode] = useState(null);
   const [managerView, setManagerView] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -38,9 +37,8 @@ export default function Dashboard() {
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
 
-    // 🟢 LISTEN FOR UPDATED STATS
+    // 🟢 LISTEN FOR DETAILED STATS
     socket.on("admin:stats", (data) => {
-      // data = { activeUsers: 5, sessionCounts: { "QUIZ1": 2, "TEST": 1 } }
       setStats({ 
         activeUsers: data.activeUsers, 
         sessionCounts: data.sessionCounts || {} 
@@ -65,7 +63,6 @@ export default function Dashboard() {
     } catch (e) { console.error("Load Error", e); }
   };
 
-  // ... (Keep createSession, startSession, stopSession, deleteSession, resetSession as is)
   const createSession = async () => {
     if (!newTitle || !newCode) return alert("Please fill in both fields.");
     try {
@@ -119,7 +116,6 @@ export default function Dashboard() {
     loadSessions();
   };
 
-  // ... (Keep openQManager, fetchQuestions, etc. as is)
   const openQManager = (code) => {
     setCurrentSessionCode(code);
     setManagerView(true);
@@ -194,18 +190,13 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="logo"><div className="logo-icon">🛠</div><span>Admin Panel</span></div>
-        
-        {/* Create Session Card */}
         <div className="card" style={{ padding: "20px", background: "var(--bg-light)", boxShadow: "none" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: "16px" }}>Create Session</h3>
           <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Title (e.g. JS Quiz)" />
           <input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} placeholder="Code (e.g. QUIZ101)" />
           <button className="btn-blue" style={{ width: "100%" }} onClick={createSession}>+ Add Session</button>
         </div>
-
         <h3 style={{ fontSize: "0.938rem", color: "var(--text-secondary)", margin: "24px 0 16px 12px", fontWeight: 500 }}>Your Sessions</h3>
-        
-        {/* Session List with Counts */}
         <div>
           {sessions.map((s) => (
             <div key={s._id} className={`session-item ${s.status === "ACTIVE" ? "active-session" : ""}`}>
@@ -215,9 +206,7 @@ export default function Dashboard() {
                   <span className="code-pill">{s.sessionCode}</span>
                   <span className={`badge ${s.status}`}>{s.status}</span>
                   {/* 🟢 NEW: Player Count for this Session */}
-                  <span className="player-count">
-                    👥 {stats.sessionCounts[s.sessionCode] || 0}
-                  </span>
+                  <span className="player-count">👥 {stats.sessionCounts[s.sessionCode] || 0}</span>
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -247,7 +236,7 @@ export default function Dashboard() {
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
-            {/* Display total connections (minus 1 to vaguely account for admin) */}
+            {/* 🟢 Subtract 1 to hide admin self-connection */}
             <div className="stat-value">{Math.max(0, stats.activeUsers - 1)}</div>
             <div className="stat-label">Total Connections</div>
           </div>
@@ -286,12 +275,12 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Modals & CSS */}
+      {/* Modals & CSS (Keep same) */}
       {previewQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setPreviewQ(null)}><div className="modal-content"><span className="close" onClick={() => setPreviewQ(null)}>✕</span><h2>Preview</h2><p>{previewQ.questionText}</p></div></div>)}
       {updateQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setUpdateQ(null)}><div className="modal-content"><span className="close" onClick={() => setUpdateQ(null)}>✕</span><h2>Update</h2><input value={updateText} onChange={(e) => setUpdateText(e.target.value)} /><button className="btn-blue" onClick={confirmUpdate}>Save</button></div></div>)}
       
       <style jsx global>{`
-        /* ... (Keep existing styles) ... */
+        /* ... existing styles ... */
         @import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap");
         :root { --google-blue: #4285f4; --google-red: #ea4335; --google-yellow: #fbbc05; --google-green: #34a853; --white: #ffffff; --bg-light: #f8f9fa; --text-primary: #202124; --text-secondary: #5f6368; --border-light: #dadce0; --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
         [data-theme="dark"] { --white: #1f1f1f; --bg-light: #121212; --text-primary: #e8eaed; --text-secondary: #9aa0a6; --border-light: #3c4043; }

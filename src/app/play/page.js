@@ -18,10 +18,8 @@ export default function GamePlay() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [result, setResult] = useState(null);
   const [winners, setWinners] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]); // Kept for GameOver usage
   const [stats, setStats] = useState({ correct: 0, incorrect: 0, timeout: 0 });
-  
-  // 🟢 NEW: History State for Review
   const [history, setHistory] = useState([]);
 
   const timerRef = useRef(null);
@@ -99,7 +97,6 @@ export default function GamePlay() {
 
     try {
       const pId = sessionStorage.getItem("PARTICIPANT_ID");
-      // 🟢 FETCH REVIEW HISTORY
       const res = await fetch(`${API_URL}/participants/history/${pId}`);
       const json = await res.json();
       if (json.success) {
@@ -138,9 +135,7 @@ export default function GamePlay() {
   const qNum = question?.qNum || 1;
   const qTotal = question?.total || 1;
   const progressPercent = (qNum / qTotal) * 100;
-  const progressRatio = totalTime > 0 ? timeLeft / totalTime : 0;
-  const circumference = 2 * Math.PI * 45;
-  const strokeDashoffset = circumference - progressRatio * circumference;
+  const strokeDashoffset = (2 * Math.PI * 45) - (totalTime > 0 ? timeLeft / totalTime : 0) * (2 * Math.PI * 45);
 
   if (view === "LOADING") return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-gray-500">Loading Game...</div>;
 
@@ -179,41 +174,33 @@ export default function GamePlay() {
              </div>
           )}
 
+          {/* 🟢 RESULT VIEW (Leaderboard Removed) */}
           {view === "RESULT" && result && (
             <div className="results-container">
                <div className="trophy-container" style={{ fontSize: "4em" }}>{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
                <h2 className="complete-title">{selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}</h2>
                <div className="performance-message" style={{ marginBottom: "20px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
-               <div className="stats-row" style={{ marginBottom: "10px" }}>
+               
+               <div className="stats-row" style={{ marginBottom: "20px" }}>
                 <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
                 <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}><div className="stat-num" style={{ color: "#b45309" }}>#{player.rank}</div><div className="stat-text">Current Rank</div></div>
               </div>
-               <div className="leaderboard-card">
-                 <div className="leaderboard-header">Top 10 Leaders</div>
-                 <div className="leaderboard-list">
-                    {leaderboard.map((w, idx) => (
-                       <div key={idx} className={`leader-item ${idx===0?"gold":idx===1?"silver":idx===2?"bronze":""}`} style={w.name===player.name?{border:"2px solid #4285F4", background:"#e8f0fe"}:{}}>
-                          <span>#{idx+1} {w.name} {w.name===player.name?"(You)":""}</span><span className="pts">{w.score}</span>
-                       </div>
-                    ))}
-                 </div>
-               </div>
+               
+               <p style={{ color: "#666", marginTop: "10px" }}>Waiting for next question...</p>
             </div>
           )}
 
+          {/* 🟢 GAMEOVER VIEW (Top 3 Shown Here) */}
           {view === "GAMEOVER" && (
             <div className="results-container">
                <div className="trophy-icon">🏆</div>
                <h2 className="complete-title">Quiz Complete!</h2>
+               
+               {/* 🏆 Leaderboard only at the end */}
                <div className="leaderboard-card"><div className="leaderboard-header">Top Winners</div><div className="leaderboard-list">{winners.map((w, idx) => (<div key={idx} className={`leader-item ${idx===0?"gold":idx===1?"silver":idx===2?"bronze":""}`}><span>#{idx+1} {w.name}</span><span className="pts">{w.score} pts</span></div>))}</div></div>
+               
                <div className="performance-card"><div className="perf-label">Your Performance</div><div className="rank-value">Rank: <span>#{player.rank}</span></div><div className="accuracy-label">Score: {player.score} pts</div></div>
-               <div className="stats-row">
-                  <div className="mini-stat" id="mini1"><div className="stat-num correct-val">{stats.correct}</div><div className="stat-text">Correct</div></div>
-                  <div className="mini-stat" id="mini2"><div className="stat-num incorrect-val">{stats.incorrect}</div><div className="stat-text">Incorrect</div></div>
-                  <div className="mini-stat" id="mini3"><div className="stat-num timeout-val">{stats.timeout}</div><div className="stat-text">Timeouts</div></div>
-               </div>
-
-               {/* 🟢 NEW: REVIEW SECTION */}
+               
                <div className="review-section">
                   <h3 style={{marginTop: "20px", marginBottom: "10px", color:"#333"}}>📝 Your Answers Review</h3>
                   <div className="review-list">
@@ -221,21 +208,16 @@ export default function GamePlay() {
                         <div key={i} className={`review-card ${h.status === "CORRECT" ? "rev-correct" : "rev-wrong"}`}>
                            <div className="rev-header"><span className="q-badge">Q{i+1}</span><span className="rev-status-text">{h.status}</span></div>
                            <p className="rev-q-text">{h.questionText}</p>
-                           <div className="rev-ans-row">
-                              <div className="rev-box user-box">You: {h.userSelected}</div>
-                              <div className="rev-box correct-box">Ans: {h.correctAnswer}</div>
-                           </div>
+                           <div className="rev-ans-row"><div className="rev-box user-box">You: {h.userSelected}</div><div className="rev-box correct-box">Ans: {h.correctAnswer}</div></div>
                         </div>
                      )) : <p style={{color: "#777"}}>Loading review...</p>}
                   </div>
                </div>
-
                <button className="restart-btn" onClick={() => router.push("/")} style={{marginTop: "20px"}}>Exit to Home</button>
             </div>
           )}
         </div>
       </div>
-
       <style jsx global>{`
         * { box-sizing: border-box; }
         .main-body { font-family: "Segoe UI", sans-serif; background: #fbfbfc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
@@ -253,7 +235,6 @@ export default function GamePlay() {
         .rev-box { padding: 5px 10px; border-radius: 6px; }
         .user-box { background: #fff; border: 1px solid #ddd; }
         .correct-box { background: #e6fffa; border: 1px solid #b2f5ea; color: #047481; font-weight: bold; }
-        /* Keep existing styles below... */
         .leaderboard-list { max-height: 250px; overflow-y: auto; }
         .leader-item { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; background: #f9f9f9; border-radius: 8px; }
         .gold { background: #fff8e1; border: 1px solid #ffc107; }

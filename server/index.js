@@ -48,12 +48,11 @@ const getAdminStats = () => {
     }
   }
   return {
-    activeUsers: io.engine.clientsCount, // Global connections
+    activeUsers: io.engine.clientsCount,
     sessionCounts // { "QUIZ101": 5, "TEST": 2 }
   };
 };
 
-// 🟢 HELPER: Broadcast to Admin
 const broadcastStats = () => {
   io.emit("admin:stats", getAdminStats());
 };
@@ -67,11 +66,8 @@ io.on("connection", (socket) => {
       const cleanCode = String(code).trim().toUpperCase();
       socket.join(cleanCode);
       
-      // Update players in lobby
       const roomSize = io.sockets.adapter.rooms.get(cleanCode)?.size || 0;
       io.to(cleanCode).emit("session:update", Array(roomSize).fill({})); 
-      
-      // Update Admin
       broadcastStats();
     }
   });
@@ -92,7 +88,7 @@ io.on("connection", (socket) => {
       const now = new Date();
       const remainingTime = session.questionEndsAt ? Math.ceil((new Date(session.questionEndsAt) - now) / 1000) : 0;
 
-      // Active Question
+      // 🟢 ACTIVE QUESTION (Time > 0)
       if (session.currentQuestionId && remainingTime > 0) {
         const question = await Question.findById(session.currentQuestionId).lean();
         if (question) {
@@ -113,10 +109,8 @@ io.on("connection", (socket) => {
         }
       }
 
-      // 🟢 LATE JOIN FIX: If we are here, time is up (Break Time).
-      // We MUST send 'game:ranks' so the client switches from LOBBY to RESULT.
+      // 🟢 BREAK TIME (Time <= 0) - SEND RANKS TO FORCE LATE JOINERS OUT OF LOBBY
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
-      
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),
         rank: idx + 1,
@@ -130,7 +124,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    // 🟢 Update counts on disconnect
     broadcastStats();
   });
 });
