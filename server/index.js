@@ -38,6 +38,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
+// 🟢 HELPER: Count UNIQUE Participants (Deduplicate tabs & Ignore Admin)
 const getUniqueCountInRoom = (room) => {
   const ids = io.sockets.adapter.rooms.get(room);
   if (!ids) return 0;
@@ -105,9 +106,22 @@ io.on("connection", (socket) => {
       if (!session) return socket.emit("error", "Session not found");
       if (session.status === "WAITING") return socket.emit("sync:idle");
       
+      // 🟢 FIX: Handle FINISHED state - Send Winners AND Ranks
       if (session.status === "FINISHED") {
+        // 1. Send Winners (Game Over Screen)
         const winners = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(3).lean();
-        return socket.emit("game:over", { winners });
+        socket.emit("game:over", { winners });
+
+        // 2. Send Ranks (So "Your Rank" updates on refresh)
+        const allPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).select("name totalScore").lean();
+        socket.emit("game:ranks", allPlayers.map((p, idx) => ({
+          id: p._id.toString(),
+          rank: idx + 1,
+          name: p.name,
+          score: p.totalScore,
+        })));
+        
+        return; 
       }
 
       const now = new Date();
@@ -124,7 +138,7 @@ io.on("connection", (socket) => {
             total: allQuestions.length,
             time: remainingTime,
             question: {
-              _id: question._id.toString(), // 🟢 EXPLICIT STRING CAST
+              _id: question._id.toString(),
               questionText: question.questionText,
               options: question.options.map(o => ({ text: o.text })),
             },
@@ -133,6 +147,7 @@ io.on("connection", (socket) => {
         }
       }
 
+      // If Break Time
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),

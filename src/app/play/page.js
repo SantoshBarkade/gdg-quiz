@@ -111,7 +111,6 @@ export default function GamePlay() {
     setView("GAMEOVER");
     if (data.winners) setWinners(data.winners);
     
-    // 🟢 Big Confetti for Game Over
     const duration = 3000;
     const end = Date.now() + duration;
     (function frame() {
@@ -158,8 +157,17 @@ export default function GamePlay() {
     }
   };
 
-  const triggerConfetti = () => {
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+  const triggerConfetti = (big = false) => {
+    if (big) {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ["#4285F4", "#34A853", "#FBBC05", "#EA4335"],
+      });
+    } else {
+      confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
+    }
   };
 
   let timerClass = "timer-circle-progress";
@@ -185,7 +193,6 @@ export default function GamePlay() {
       <div className="background-grid"></div>
 
       {view === "GAMEOVER" ? (
-        // 🟢 GAME OVER VIEW (Full Page Design)
         <div className="game-over-wrapper">
           <div className="game-over-header">
             <div className="trophy-icon">🏆</div>
@@ -240,7 +247,6 @@ export default function GamePlay() {
           <button className="home-btn" onClick={() => router.push("/")}>Back to Home</button>
         </div>
       ) : (
-        // 🟢 NORMAL GAME CARD (Loading, Question, Result)
         <div className="container">
           <div className="quiz-card">
             
@@ -287,14 +293,35 @@ export default function GamePlay() {
 
             {view === "RESULT" && result && (
               <div className="results-container">
-                <div className="trophy-container" style={{ fontSize: "4em" }}>{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
-                <h2 className="complete-title">{selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}</h2>
-                <div className="performance-message" style={{ marginBottom: "20px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
-                <div className="stats-row" style={{ marginBottom: "20px", justifyContent: 'center' }}>
+                {/* 🟢 NEW: Enhanced Result Animation */}
+                <div className="result-icon-anim">
+                  {selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}
+                </div>
+                
+                <h2 className="complete-title" style={{ marginTop: '10px' }}>
+                  {selectedOption === result.correctAnswer ? (
+                    <span style={{ color: "#34A853" }}>Correct!</span>
+                  ) : (
+                    <span style={{ color: "#EA4335" }}>Wrong!</span>
+                  )}
+                </h2>
+                
+                <div className="performance-message" style={{ marginBottom: "25px" }}>
+                  Correct Answer: <strong>{result.correctAnswer}</strong>
+                </div>
+                
+                <div className="stats-row" style={{ marginBottom: "30px", justifyContent: 'center' }}>
                   <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
                   <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}><div className="stat-num" style={{ color: "#b45309" }}>#{player.rank}</div><div className="stat-text">Current Rank</div></div>
                 </div>
-                <p style={{ color: "#666", marginTop: "10px" }}>Waiting for next question...</p>
+                
+                {/* 🟢 NEW: Redirecting Progress Bar */}
+                <div className="redirect-container">
+                   <p className="redirect-text">Redirecting to next question...</p>
+                   <div className="cooling-progress-bar">
+                      <div className="cooling-progress-fill"></div>
+                   </div>
+                </div>
               </div>
             )}
           </div>
@@ -314,7 +341,7 @@ export default function GamePlay() {
           align-items: center;
           padding: 20px;
           position: relative;
-          overflow-y: auto; /* Allow scrolling for game over */
+          overflow-y: auto;
         }
 
         .background-grid {
@@ -337,38 +364,64 @@ export default function GamePlay() {
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
           border: 1px solid #f0f0f0;
           border-top: 6px solid #4285F4;
+          transition: all 0.3s ease;
         }
 
-        /* 🟢 GAME OVER STYLES */
-        .game-over-wrapper {
-          width: 100%; max-width: 600px;
-          position: relative; z-index: 2;
-          text-align: center;
-          padding-bottom: 40px;
+        /* 🟢 COOLING SCREEN STYLES */
+        .results-container { text-align: center; animation: slideUpFade 0.5s ease-out forwards; }
+        
+        .result-icon-anim {
+          font-size: 5rem;
+          margin-bottom: 5px;
+          animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          display: inline-block;
+        }
+
+        .redirect-container {
+          margin-top: 20px;
+          opacity: 0;
+          animation: fadeIn 0.5s ease 0.5s forwards;
         }
         
+        .redirect-text {
+          color: #5f6368;
+          font-size: 0.9rem;
+          margin-bottom: 8px;
+          font-weight: 500;
+        }
+
+        .cooling-progress-bar {
+          width: 100%; max-width: 300px; height: 6px;
+          background: #f1f3f4;
+          border-radius: 10px;
+          margin: 0 auto;
+          overflow: hidden;
+        }
+
+        .cooling-progress-fill {
+          height: 100%;
+          background: #4285F4;
+          width: 0%;
+          animation: fillBar 4s linear infinite; /* 4s is generic placeholder */
+        }
+
+        @keyframes fillBar { 0% { width: 0%; } 100% { width: 100%; } }
+        @keyframes popBounce { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+        @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* ... Existing Game Over & Other Styles ... */
+        .game-over-wrapper { width: 100%; max-width: 600px; position: relative; z-index: 2; text-align: center; padding-bottom: 40px; }
         .game-over-header h1 { font-size: 2.5rem; color: #202124; margin: 10px 0; }
         .game-over-header p { color: #5f6368; }
         .trophy-icon { font-size: 4rem; animation: pulseZoom 2s infinite; }
-
         .winners-grid { display: flex; flex-direction: column; gap: 10px; margin: 30px 0; }
-        .winner-card {
-          background: white; padding: 15px 20px;
-          border-radius: 16px;
-          display: flex; align-items: center; justify-content: space-between;
-          border: 1px solid #eee;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        
-        /* Rank Styles */
+        .winner-card { background: white; padding: 15px 20px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .rank-1 { border: 2px solid #FFD700; background: linear-gradient(135deg, #fff9c4, #fff); transform: scale(1.05); }
         .rank-2 { border: 2px solid #C0C0C0; background: linear-gradient(135deg, #f5f5f5, #fff); }
         .rank-3 { border: 2px solid #CD7F32; background: linear-gradient(135deg, #ffe0b2, #fff); }
-        
         .medal-icon { font-size: 1.5rem; width: 40px; }
         .winner-name { font-weight: 700; color: #333; flex: 1; text-align: left; }
         .winner-score { font-weight: 800; color: #4285F4; }
-
         .stats-dashboard { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 30px; }
         .stat-box { background: white; padding: 15px; border-radius: 16px; border: 1px solid #eee; }
         .stat-label { font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: 600; }
@@ -376,57 +429,30 @@ export default function GamePlay() {
         .blue .stat-val { color: #4285F4; }
         .green .stat-val { color: #34A853; }
         .yellow .stat-val { color: #FBBC05; }
-
         .review-container { background: white; border-radius: 20px; padding: 25px; text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .review-container h3 { margin-top: 0; color: #444; }
         .review-list { max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-        
-        .review-item { 
-          display: flex; gap: 15px; padding: 15px; 
-          border-radius: 12px; background: #f9f9f9; border: 1px solid #eee;
-        }
+        .review-item { display: flex; gap: 15px; padding: 15px; border-radius: 12px; background: #f9f9f9; border: 1px solid #eee; }
         .review-item.correct { border-left: 4px solid #34A853; background: #f6fffa; }
         .review-item.wrong { border-left: 4px solid #EA4335; background: #fff8f8; }
-        
         .review-q-num { font-weight: 800; color: #888; }
         .review-content { flex: 1; }
         .review-q-text { font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: #333; }
-        
         .review-badges { display: flex; gap: 10px; font-size: 0.85rem; }
         .badge { padding: 4px 10px; border-radius: 6px; font-weight: 600; }
         .badge.user { background: white; border: 1px solid #ddd; }
         .badge.answer { background: #e6fffa; color: #00796b; border: 1px solid #b2dfdb; }
-
-        .home-btn {
-          margin-top: 30px;
-          background: #4285F4; color: white; border: none;
-          padding: 15px 40px; border-radius: 50px;
-          font-weight: 700; font-size: 1rem;
-          cursor: pointer; box-shadow: 0 10px 25px rgba(66, 133, 244, 0.3);
-          transition: transform 0.2s;
-        }
+        .home-btn { margin-top: 30px; background: #4285F4; color: white; border: none; padding: 15px 40px; border-radius: 50px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 10px 25px rgba(66, 133, 244, 0.3); transition: transform 0.2s; }
         .home-btn:hover { transform: translateY(-3px); }
-
-        /* ... Reuse styles from before for Quiz Card ... */
-        .loader-spinner {
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #4285F4;
-          border-radius: 50%;
-          width: 40px; height: 40px;
-          animation: spin 1s linear infinite;
-          margin: 0 auto;
-        }
+        .loader-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #4285F4; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .start-screen, .results-container { text-align: center; animation: fadeIn 1s ease forwards; }
         .complete-title { color: #4285f4; font-size: 2.2em; margin-bottom: 25px; font-weight: 800; }
         .trophy-icon, .trophy-container { font-size: 4em; margin-bottom: 10px; display: inline-block; animation: pulseZoom 2s ease-in-out infinite; }
-        
         .stats-row { display: flex; gap: 15px; } 
         .mini-stat { padding: 15px 25px; border-radius: 16px; background: #f5f5f5; text-align: center; border: 1px solid transparent; min-width: 120px; }
         .stat-num { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 5px; }
         .stat-text { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-
         .timer-circle-container { position: relative; width: 80px; height: 80px; }
         .timer-svg { position: absolute; top: 0; left: 0; }
         .timer-circle-bg { fill: none; stroke: #e0e0e0; stroke-width: 4; }
@@ -439,7 +465,6 @@ export default function GamePlay() {
         .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: #34a853; transition: width 0.5s ease; }
-        
         .question-counter { background: #ea4335; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
         .score-display-top { color: #34a853; font-weight: 600; padding: 8px 16px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; }
         .question-text { font-size: 1.5em; color: #333; margin-bottom: 30px; font-weight: 600; text-align: center; }
@@ -450,7 +475,6 @@ export default function GamePlay() {
         .answer-btn:hover { border-color: #4285F4; background: #f8faff; }
         .selected-answer { background: #e8f0fe; border-color: #4285F4; box-shadow: 0 4px 0 #4285F4; }
         .selected-answer::before { background: #4285F4; color: white; }
-        
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes pulseZoom { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
         @media (max-width: 600px) { .answers-grid, .stats-row { grid-template-columns: 1fr; } .quiz-card { padding: 20px; } }
