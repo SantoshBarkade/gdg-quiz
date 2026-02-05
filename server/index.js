@@ -38,7 +38,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
-// 🟢 HELPER: Count UNIQUE Participants (Deduplicate tabs & Ignore Admin)
+// 🟢 Helper: Count Unique Players
 const getUniqueCountInRoom = (room) => {
   const ids = io.sockets.adapter.rooms.get(room);
   if (!ids) return 0;
@@ -61,7 +61,6 @@ const getAdminStats = () => {
     if (room.length <= 10 && room === room.toUpperCase()) {
        const count = getUniqueCountInRoom(room);
        sessionCounts[room] = count;
-       
        const roomIds = io.sockets.adapter.rooms.get(room);
        if(roomIds) {
          for(const id of roomIds) {
@@ -90,10 +89,8 @@ io.on("connection", (socket) => {
       const cleanCode = String(code).trim().toUpperCase();
       if (participantId) socket.participantId = participantId;
       socket.join(cleanCode);
-      
       const uniqueCount = getUniqueCountInRoom(cleanCode);
       io.to(cleanCode).emit("session:update", Array(uniqueCount).fill({})); 
-      
       broadcastStats();
     }
   });
@@ -106,13 +103,11 @@ io.on("connection", (socket) => {
       if (!session) return socket.emit("error", "Session not found");
       if (session.status === "WAITING") return socket.emit("sync:idle");
       
-      // 🟢 FIX: Handle FINISHED state - Send Winners AND Ranks
+      // 🟢 FIX: Send BOTH Winners (Game Over) AND Ranks (For Refresh)
       if (session.status === "FINISHED") {
-        // 1. Send Winners (Game Over Screen)
         const winners = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(3).lean();
         socket.emit("game:over", { winners });
 
-        // 2. Send Ranks (So "Your Rank" updates on refresh)
         const allPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).select("name totalScore").lean();
         socket.emit("game:ranks", allPlayers.map((p, idx) => ({
           id: p._id.toString(),
@@ -147,7 +142,6 @@ io.on("connection", (socket) => {
         }
       }
 
-      // If Break Time
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),

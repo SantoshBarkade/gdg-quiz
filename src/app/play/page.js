@@ -35,33 +35,38 @@ export default function GamePlay() {
     }
 
     setPlayer((prev) => ({ ...prev, name: name || "Player" }));
-    setView("LOBBY");
+    
+    // 🟢 1. SETUP LISTENERS FIRST
+    const onQuestion = (data) => handleNewQuestion(data);
+    const onResult = (data) => handleResult(data);
+    const onRanks = (data) => handleRanks(data);
+    const onGameOver = (data) => handleGameOver(data);
+    const onIdle = () => setView("LOBBY");
+    const onForceStop = () => { alert("Host ended session."); router.push("/"); };
 
+    socket.on("game:question", onQuestion);
+    socket.on("game:result", onResult);
+    socket.on("game:ranks", onRanks);
+    socket.on("game:over", onGameOver);
+    socket.on("sync:idle", onIdle);
+    socket.on("game:force_stop", onForceStop);
+
+    // 🟢 2. THEN JOIN
     socket.emit("join:session", code, pId);
     socket.emit("sync:state", code);
 
-    socket.on("game:question", handleNewQuestion);
-    socket.on("game:result", handleResult);
-    socket.on("game:ranks", handleRanks);
-    socket.on("game:over", handleGameOver);
-    socket.on("sync:idle", () => setView("LOBBY"));
-    socket.on("game:force_stop", () => {
-      alert("The host has ended the session.");
-      router.push("/");
-    });
-    
     socket.on("connect", () => {
       socket.emit("join:session", code, pId);
       socket.emit("sync:state", code);
     });
 
     return () => {
-      socket.off("game:question");
-      socket.off("game:result");
-      socket.off("game:ranks");
-      socket.off("game:over");
-      socket.off("sync:idle");
-      socket.off("game:force_stop");
+      socket.off("game:question", onQuestion);
+      socket.off("game:result", onResult);
+      socket.off("game:ranks", onRanks);
+      socket.off("game:over", onGameOver);
+      socket.off("sync:idle", onIdle);
+      socket.off("game:force_stop", onForceStop);
       socket.off("connect");
       clearInterval(timerRef.current);
     };
@@ -78,10 +83,7 @@ export default function GamePlay() {
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(timerRef.current); return 0; }
         return prev - 1;
       });
     }, 1000);
@@ -96,6 +98,7 @@ export default function GamePlay() {
 
   const handleRanks = (rankList) => {
     setLeaderboard(rankList);
+    // Only switch to RESULT if not in Game Over
     if (view === "LOBBY" || view === "LOADING") {
        setView("RESULT");
     }
@@ -130,9 +133,7 @@ export default function GamePlay() {
         const timeout = json.data.filter((h) => h.status === "TIMEOUT").length || 0;
         setStats({ correct, incorrect, timeout });
       }
-    } catch (e) {
-      console.error("History Error", e);
-    }
+    } catch (e) { console.error("History Error", e); }
   };
 
   const submitAnswer = async (text) => {
@@ -144,30 +145,14 @@ export default function GamePlay() {
       await fetch(`${API_URL}/participants/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: pId,
-          sessionCode: code,
-          questionId: question.question._id,
-          selectedOption: text,
-          timeLeft: timeLeft,
-        }),
+        body: JSON.stringify({ participantId: pId, sessionCode: code, questionId: question.question._id, selectedOption: text, timeLeft: timeLeft }),
       });
-    } catch (e) {
-      console.error("Submit error", e);
-    }
+    } catch (e) { console.error("Submit error", e); }
   };
 
   const triggerConfetti = (big = false) => {
-    if (big) {
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ["#4285F4", "#34A853", "#FBBC05", "#EA4335"],
-      });
-    } else {
-      confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } });
-    }
+    if (big) { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ["#4285F4", "#34A853", "#FBBC05", "#EA4335"] }); }
+    else { confetti({ particleCount: 50, spread: 50, origin: { y: 0.7 } }); }
   };
 
   let timerClass = "timer-circle-progress";
@@ -177,9 +162,7 @@ export default function GamePlay() {
   const qNum = question?.qNum || 1;
   const qTotal = question?.total || 1;
   const progressPercent = (qNum / qTotal) * 100;
-  const strokeDashoffset =
-    2 * Math.PI * 45 -
-    (totalTime > 0 ? timeLeft / totalTime : 0) * (2 * Math.PI * 45);
+  const strokeDashoffset = (2 * Math.PI * 45) - (totalTime > 0 ? timeLeft / totalTime : 0) * (2 * Math.PI * 45);
 
   const getRankIcon = (idx) => {
     if (idx === 0) return "🥇";
@@ -205,6 +188,7 @@ export default function GamePlay() {
               <div key={idx} className={`winner-card rank-${idx + 1}`}>
                 <div className="medal-icon">{getRankIcon(idx)}</div>
                 <div className="winner-name">{w.name}</div>
+                {/* 🟢 FIXED: Using w.totalScore */}
                 <div className="winner-score">{w.totalScore} pts</div>
               </div>
             ))}
@@ -294,21 +278,13 @@ export default function GamePlay() {
             {view === "RESULT" && result && (
               <div className="results-container">
                 {/* 🟢 NEW: Enhanced Result Animation */}
-                <div className="result-icon-anim">
-                  {selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}
-                </div>
+                <div className="result-icon-anim">{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
                 
                 <h2 className="complete-title" style={{ marginTop: '10px' }}>
-                  {selectedOption === result.correctAnswer ? (
-                    <span style={{ color: "#34A853" }}>Correct!</span>
-                  ) : (
-                    <span style={{ color: "#EA4335" }}>Wrong!</span>
-                  )}
+                  {selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}
                 </h2>
                 
-                <div className="performance-message" style={{ marginBottom: "25px" }}>
-                  Correct Answer: <strong>{result.correctAnswer}</strong>
-                </div>
+                <div className="performance-message" style={{ marginBottom: "25px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
                 
                 <div className="stats-row" style={{ marginBottom: "30px", justifyContent: 'center' }}>
                   <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
@@ -318,9 +294,7 @@ export default function GamePlay() {
                 {/* 🟢 NEW: Redirecting Progress Bar */}
                 <div className="redirect-container">
                    <p className="redirect-text">Redirecting to next question...</p>
-                   <div className="cooling-progress-bar">
-                      <div className="cooling-progress-fill"></div>
-                   </div>
+                   <div className="cooling-progress-bar"><div className="cooling-progress-fill"></div></div>
                 </div>
               </div>
             )}
@@ -332,84 +306,24 @@ export default function GamePlay() {
 
       <style jsx global>{`
         * { box-sizing: border-box; }
-        .main-body {
-          font-family: 'Poppins', sans-serif;
-          background: #ffffff;
-          min-height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 20px;
-          position: relative;
-          overflow-y: auto;
-        }
-
-        .background-grid {
-          position: fixed;
-          inset: 0;
-          background-image:
-            linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px);
-          background-size: 40px 40px;
-          z-index: 0;
-          pointer-events: none;
-        }
-
+        .main-body { font-family: 'Poppins', sans-serif; background: #ffffff; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; overflow-y: auto; }
+        .background-grid { position: fixed; inset: 0; background-image: linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px); background-size: 40px 40px; z-index: 0; pointer-events: none; }
         .container { max-width: 800px; width: 100%; position: relative; z-index: 1; }
-
-        .quiz-card {
-          background: white;
-          border-radius: 24px;
-          padding: 40px;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-          border: 1px solid #f0f0f0;
-          border-top: 6px solid #4285F4;
-          transition: all 0.3s ease;
-        }
-
-        /* 🟢 COOLING SCREEN STYLES */
+        .quiz-card { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border: 1px solid #f0f0f0; border-top: 6px solid #4285F4; transition: all 0.3s ease; }
+        
+        /* RESULT & COOLING ANIMATIONS */
         .results-container { text-align: center; animation: slideUpFade 0.5s ease-out forwards; }
+        .result-icon-anim { font-size: 5rem; margin-bottom: 5px; animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
+        .redirect-container { margin-top: 20px; opacity: 0; animation: fadeIn 0.5s ease 0.5s forwards; }
+        .redirect-text { color: #5f6368; font-size: 0.9rem; margin-bottom: 8px; font-weight: 500; }
+        .cooling-progress-bar { width: 100%; max-width: 300px; height: 6px; background: #f1f3f4; border-radius: 10px; margin: 0 auto; overflow: hidden; }
+        .cooling-progress-fill { height: 100%; background: #4285F4; width: 0%; animation: fillBar 4s linear infinite; }
         
-        .result-icon-anim {
-          font-size: 5rem;
-          margin-bottom: 5px;
-          animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-          display: inline-block;
-        }
-
-        .redirect-container {
-          margin-top: 20px;
-          opacity: 0;
-          animation: fadeIn 0.5s ease 0.5s forwards;
-        }
-        
-        .redirect-text {
-          color: #5f6368;
-          font-size: 0.9rem;
-          margin-bottom: 8px;
-          font-weight: 500;
-        }
-
-        .cooling-progress-bar {
-          width: 100%; max-width: 300px; height: 6px;
-          background: #f1f3f4;
-          border-radius: 10px;
-          margin: 0 auto;
-          overflow: hidden;
-        }
-
-        .cooling-progress-fill {
-          height: 100%;
-          background: #4285F4;
-          width: 0%;
-          animation: fillBar 4s linear infinite; /* 4s is generic placeholder */
-        }
-
         @keyframes fillBar { 0% { width: 0%; } 100% { width: 100%; } }
         @keyframes popBounce { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
         @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
-        /* ... Existing Game Over & Other Styles ... */
+        /* GAME OVER */
         .game-over-wrapper { width: 100%; max-width: 600px; position: relative; z-index: 2; text-align: center; padding-bottom: 40px; }
         .game-over-header h1 { font-size: 2.5rem; color: #202124; margin: 10px 0; }
         .game-over-header p { color: #5f6368; }

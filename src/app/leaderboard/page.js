@@ -14,21 +14,35 @@ function LeaderboardContent() {
   useEffect(() => {
     if (!code) return;
 
-    socket.emit("join:session", code);
-
-    socket.on("game:ranks", (data) => {
+    // 1. Listen for updates
+    const onRanks = (data) => {
+      // Sort by score descending
       const sorted = data.sort((a, b) => b.score - a.score);
       setLeaderboard(sorted);
       setLoading(false);
-    });
+    };
 
-    socket.on("game:over", () => {
-      // Optional confetti logic here
+    const onGameOver = () => {
+      // Optional: Trigger celebration/confetti on admin screen
+    };
+
+    socket.on("game:ranks", onRanks);
+    socket.on("game:over", onGameOver);
+
+    // 2. Join & Request Data Immediately (Fix for Refresh Issue)
+    socket.emit("join:session", code);
+    socket.emit("sync:state", code); 
+
+    // Handle connection restore
+    socket.on("connect", () => {
+      socket.emit("join:session", code);
+      socket.emit("sync:state", code);
     });
 
     return () => {
-      socket.off("game:ranks");
-      socket.off("game:over");
+      socket.off("game:ranks", onRanks);
+      socket.off("game:over", onGameOver);
+      socket.off("connect");
     };
   }, [code, socket]);
 
@@ -145,7 +159,7 @@ function LeaderboardContent() {
 
         .logo-img { height: 60px; margin-bottom: 10px; }
         
-        h1 { margin: 0; color: #202124; fontSize: 2rem; fontWeight: 800; }
+        h1 { margin: 0; color: #202124; font-size: 2rem; font-weight: 800; }
 
         .session-badge {
           display: inline-block;
@@ -180,7 +194,11 @@ function LeaderboardContent() {
           opacity: 0;
         }
 
-        /* 🟢 MEDAL STYLES (Gold, Silver, Bronze) */
+        .card:hover { transform: scale(1.01); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* MEDAL STYLES */
         /* Gold */
         .rank-1 { 
           background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
@@ -188,7 +206,7 @@ function LeaderboardContent() {
           box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
           transform: scale(1.02);
         }
-        .rank-1 .rank-badge { font-size: 1.8rem; } /* Bigger emoji */
+        .rank-1 .rank-badge { font-size: 1.8rem; }
 
         /* Silver */
         .rank-2 { 
@@ -211,9 +229,7 @@ function LeaderboardContent() {
         .rank-badge {
           width: 40px; height: 40px;
           display: flex; align-items: center; justify-content: center;
-          font-weight: 800;
-          font-size: 1rem;
-          color: #5f6368;
+          font-weight: 800; font-size: 1rem; color: #5f6368;
         }
 
         .avatar-placeholder {
@@ -222,8 +238,7 @@ function LeaderboardContent() {
           background: linear-gradient(135deg, #4285F4, #34A853);
           color: white;
           display: flex; align-items: center; justify-content: center;
-          font-weight: 700;
-          font-size: 1.1rem;
+          font-weight: 700; font-size: 1.1rem;
         }
 
         .name { font-size: 1.1rem; font-weight: 600; color: #333; }
@@ -231,9 +246,16 @@ function LeaderboardContent() {
         .pts-label { font-size: 0.8rem; font-weight: 600; color: #888; margin-left: 2px; }
 
         .loading-state, .empty-state { text-align: center; padding: 40px; color: #888; font-weight: 500; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #4285F4; border-radius: 50%; margin: 0 auto 15px; animation: spin 1s linear infinite; }
+        
+        .spinner {
+          width: 40px; height: 40px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #4285F4;
+          border-radius: 50%;
+          margin: 0 auto 15px;
+          animation: spin 1s linear infinite;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .footer {
           padding: 15px;
