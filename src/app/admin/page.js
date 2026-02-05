@@ -5,8 +5,8 @@ import Link from "next/link";
 
 // 🟢 CONFIGURATION
 // ✅ Make sure this URL matches your live Render Backend
-const API_URL = "https://gdgslio.onrender.com/api";
-// OR keep "https://gdgslio.onrender.com/api" if you didn't create a v2.
+const API_URL = "https://gdg-quiz.onrender.com/api";
+// OR keep "https://gdg-quiz.onrender.com/api" if you didn't create a v2.
 
 export default function AdminLogin() {
   const router = useRouter();

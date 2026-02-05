@@ -4,7 +4,7 @@ import { getSocket } from "@/lib/socket";
 import { useRouter } from "next/navigation";
 
 // 🟢 CONFIGURATION
-const API_URL = "https://gdgslio.onrender.com/api";
+const API_URL = "https://gdg-quiz.onrender.com/api";
 
 export default function Dashboard() {
   const router = useRouter();

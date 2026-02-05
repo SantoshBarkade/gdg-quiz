@@ -5,7 +5,7 @@ import Link from "next/link";
 
 // 🟢 CONFIGURATION
 // Make sure this matches your deployed backend URL exactly
-const API_URL = "https://gdgslio.onrender.com/api";
+const API_URL = "https://gdg-quiz.onrender.com/api";
 
 function UserJoinContent() {
   const router = useRouter();

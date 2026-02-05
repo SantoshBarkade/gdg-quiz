@@ -1,7 +1,7 @@
 import { io } from "socket.io-client";
 
 // ✅ FIXED URL (No double 'h', and removed '/api')
-const SOCKET_URL = "https://gdgslio.onrender.com";
+const SOCKET_URL = "https://gdg-quiz.onrender.com";
 
 let socket;
 
