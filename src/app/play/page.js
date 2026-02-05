@@ -36,14 +36,26 @@ export default function GamePlay() {
 
     setPlayer((prev) => ({ ...prev, name: name || "Player" }));
     
-    // 🟢 1. SETUP LISTENERS FIRST
+    // 🟢 1. DEFINE HANDLERS
     const onQuestion = (data) => handleNewQuestion(data);
     const onResult = (data) => handleResult(data);
-    const onRanks = (data) => handleRanks(data);
+    const onRanks = (rankList) => {
+        setLeaderboard(rankList);
+        // Update my personal rank/score from the full list
+        const me = rankList.find((p) => p.id === pId);
+        if (me) {
+          setPlayer((prev) => ({ ...prev, rank: me.rank, score: me.score }));
+        }
+        // Only switch view if we are waiting/loading (don't override Game Over)
+        if (view === "LOBBY" || view === "LOADING") {
+           setView("RESULT");
+        }
+    };
     const onGameOver = (data) => handleGameOver(data);
     const onIdle = () => setView("LOBBY");
     const onForceStop = () => { alert("Host ended session."); router.push("/"); };
 
+    // 🟢 2. REGISTER LISTENERS
     socket.on("game:question", onQuestion);
     socket.on("game:result", onResult);
     socket.on("game:ranks", onRanks);
@@ -51,7 +63,7 @@ export default function GamePlay() {
     socket.on("sync:idle", onIdle);
     socket.on("game:force_stop", onForceStop);
 
-    // 🟢 2. THEN JOIN
+    // 🟢 3. JOIN & SYNC
     socket.emit("join:session", code, pId);
     socket.emit("sync:state", code);
 
@@ -70,7 +82,7 @@ export default function GamePlay() {
       socket.off("connect");
       clearInterval(timerRef.current);
     };
-  }, []);
+  }, []); // Remove dependencies to avoid re-binding loops
 
   const handleNewQuestion = (data) => {
     setView("QUESTION");
@@ -96,24 +108,14 @@ export default function GamePlay() {
     if (data.correctAnswer === selectedOption) triggerConfetti();
   };
 
-  const handleRanks = (rankList) => {
-    setLeaderboard(rankList);
-    // Only switch to RESULT if not in Game Over
-    if (view === "LOBBY" || view === "LOADING") {
-       setView("RESULT");
-    }
-    const pId = sessionStorage.getItem("PARTICIPANT_ID");
-    const me = rankList.find((p) => p.id === pId);
-    if (me) {
-      setPlayer((prev) => ({ ...prev, rank: me.rank, score: me.score }));
-    }
-  };
-
   const handleGameOver = async (data) => {
     clearInterval(timerRef.current);
     setView("GAMEOVER");
+    
+    // 🟢 Fix: Ensure we use the normalized data
     if (data.winners) setWinners(data.winners);
     
+    // Confetti
     const duration = 3000;
     const end = Date.now() + duration;
     (function frame() {
@@ -188,8 +190,8 @@ export default function GamePlay() {
               <div key={idx} className={`winner-card rank-${idx + 1}`}>
                 <div className="medal-icon">{getRankIcon(idx)}</div>
                 <div className="winner-name">{w.name}</div>
-                {/* 🟢 FIXED: Using w.totalScore */}
-                <div className="winner-score">{w.totalScore} pts</div>
+                {/* 🟢 Fix: Use .score (normalized from backend) */}
+                <div className="winner-score">{w.score} pts</div>
               </div>
             ))}
           </div>
@@ -233,7 +235,6 @@ export default function GamePlay() {
       ) : (
         <div className="container">
           <div className="quiz-card">
-            
             {view === "LOADING" && (
               <div style={{textAlign: 'center', padding: '60px'}}>
                  <div className="loader-spinner"></div>
@@ -277,21 +278,13 @@ export default function GamePlay() {
 
             {view === "RESULT" && result && (
               <div className="results-container">
-                {/* 🟢 NEW: Enhanced Result Animation */}
                 <div className="result-icon-anim">{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
-                
-                <h2 className="complete-title" style={{ marginTop: '10px' }}>
-                  {selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}
-                </h2>
-                
+                <h2 className="complete-title" style={{ marginTop: '10px' }}>{selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}</h2>
                 <div className="performance-message" style={{ marginBottom: "25px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
-                
                 <div className="stats-row" style={{ marginBottom: "30px", justifyContent: 'center' }}>
                   <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
                   <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}><div className="stat-num" style={{ color: "#b45309" }}>#{player.rank}</div><div className="stat-text">Current Rank</div></div>
                 </div>
-                
-                {/* 🟢 NEW: Redirecting Progress Bar */}
                 <div className="redirect-container">
                    <p className="redirect-text">Redirecting to next question...</p>
                    <div className="cooling-progress-bar"><div className="cooling-progress-fill"></div></div>
@@ -310,20 +303,15 @@ export default function GamePlay() {
         .background-grid { position: fixed; inset: 0; background-image: linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px); background-size: 40px 40px; z-index: 0; pointer-events: none; }
         .container { max-width: 800px; width: 100%; position: relative; z-index: 1; }
         .quiz-card { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border: 1px solid #f0f0f0; border-top: 6px solid #4285F4; transition: all 0.3s ease; }
-        
-        /* RESULT & COOLING ANIMATIONS */
         .results-container { text-align: center; animation: slideUpFade 0.5s ease-out forwards; }
         .result-icon-anim { font-size: 5rem; margin-bottom: 5px; animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .redirect-container { margin-top: 20px; opacity: 0; animation: fadeIn 0.5s ease 0.5s forwards; }
         .redirect-text { color: #5f6368; font-size: 0.9rem; margin-bottom: 8px; font-weight: 500; }
         .cooling-progress-bar { width: 100%; max-width: 300px; height: 6px; background: #f1f3f4; border-radius: 10px; margin: 0 auto; overflow: hidden; }
         .cooling-progress-fill { height: 100%; background: #4285F4; width: 0%; animation: fillBar 4s linear infinite; }
-        
         @keyframes fillBar { 0% { width: 0%; } 100% { width: 100%; } }
         @keyframes popBounce { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
         @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* GAME OVER */
         .game-over-wrapper { width: 100%; max-width: 600px; position: relative; z-index: 2; text-align: center; padding-bottom: 40px; }
         .game-over-header h1 { font-size: 2.5rem; color: #202124; margin: 10px 0; }
         .game-over-header p { color: #5f6368; }

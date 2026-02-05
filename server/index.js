@@ -38,11 +38,9 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
-// 🟢 Helper: Count Unique Players
 const getUniqueCountInRoom = (room) => {
   const ids = io.sockets.adapter.rooms.get(room);
   if (!ids) return 0;
-  
   const uniqueParticipants = new Set();
   for (const id of ids) {
     const socket = io.sockets.sockets.get(id);
@@ -56,7 +54,6 @@ const getUniqueCountInRoom = (room) => {
 const getAdminStats = () => {
   const sessionCounts = {};
   const allUniquePlayers = new Set();
-
   for (const [room, ids] of io.sockets.adapter.rooms) {
     if (room.length <= 10 && room === room.toUpperCase()) {
        const count = getUniqueCountInRoom(room);
@@ -70,10 +67,7 @@ const getAdminStats = () => {
        }
     }
   }
-  return {
-    activeUsers: allUniquePlayers.size,
-    sessionCounts 
-  };
+  return { activeUsers: allUniquePlayers.size, sessionCounts };
 };
 
 const broadcastStats = () => {
@@ -103,11 +97,19 @@ io.on("connection", (socket) => {
       if (!session) return socket.emit("error", "Session not found");
       if (session.status === "WAITING") return socket.emit("sync:idle");
       
-      // 🟢 FIX: Send BOTH Winners (Game Over) AND Ranks (For Refresh)
+      // 🟢 FIX: Handle FINISHED state robustly
       if (session.status === "FINISHED") {
-        const winners = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(3).lean();
+        // 1. Get Winners & Standardize Data (Map totalScore -> score)
+        const winnersRaw = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(3).lean();
+        const winners = winnersRaw.map(w => ({
+          name: w.name,
+          score: w.totalScore, // 🟢 Normalize here
+          participantNumber: w.participantNumber
+        }));
+        
         socket.emit("game:over", { winners });
 
+        // 2. Send Full Ranks (So user can find their own rank on refresh)
         const allPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).select("name totalScore").lean();
         socket.emit("game:ranks", allPlayers.map((p, idx) => ({
           id: p._id.toString(),
