@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 // 🟢 CONFIGURATION
-// Make sure this matches your deployed backend URL exactly
 const API_URL = "https://gdg-quiz.onrender.com/api";
 
 function UserJoinContent() {
@@ -60,8 +59,13 @@ function UserJoinContent() {
         sessionStorage.setItem("PARTICIPANT_ID", data.data.participantId);
         sessionStorage.setItem("PLAYER_NAME", data.data.name);
 
-        // 🔄 REDIRECT TO LOBBY (Wait for host)
-        router.push("/play/lobby");
+        // 🟢 SMART REDIRECT (Late Joiner Fix)
+        // If the server says the game is ACTIVE, go straight to play.
+        if (data.data.sessionStatus === "ACTIVE") {
+           router.push("/play");
+        } else {
+           router.push("/play/lobby");
+        }
       } else {
         setError(data.message || "Failed to join session.");
       }
@@ -82,7 +86,11 @@ function UserJoinContent() {
           backgroundSize: "24px 24px",
         }}></div>
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100 z-10 animate-fade-up">
+      {/* 🟢 MODIFIED: Added style={{ borderTop: ... }} to match Quiz Card */}
+      <div 
+        className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100 z-10 animate-fade-up"
+        style={{ borderTop: "6px solid #4285F4" }}
+      >
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
             🚀

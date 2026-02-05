@@ -38,17 +38,44 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
-// 🟢 HELPER: Accurate Counts Per Session
+// 🟢 HELPER: Count UNIQUE Participants (Deduplicate tabs & Ignore Admin)
+const getUniqueCountInRoom = (room) => {
+  const ids = io.sockets.adapter.rooms.get(room);
+  if (!ids) return 0;
+  
+  const uniqueParticipants = new Set();
+  for (const id of ids) {
+    const socket = io.sockets.sockets.get(id);
+    // Only count if they have a participantId (Players)
+    if (socket && socket.participantId) {
+      uniqueParticipants.add(socket.participantId);
+    }
+  }
+  return uniqueParticipants.size;
+};
+
 const getAdminStats = () => {
   const sessionCounts = {};
+  const allUniquePlayers = new Set();
+
   for (const [room, ids] of io.sockets.adapter.rooms) {
-    // Only count rooms that look like session codes (Uppercase, length <= 10)
+    // Check if room looks like a Session Code (Uppercase, 6 chars etc)
     if (room.length <= 10 && room === room.toUpperCase()) {
-       sessionCounts[room] = ids.size;
+       const count = getUniqueCountInRoom(room);
+       sessionCounts[room] = count;
+       
+       // Add to global set
+       const roomIds = io.sockets.adapter.rooms.get(room);
+       if(roomIds) {
+         for(const id of roomIds) {
+            const s = io.sockets.sockets.get(id);
+            if(s && s.participantId) allUniquePlayers.add(s.participantId);
+         }
+       }
     }
   }
   return {
-    activeUsers: io.engine.clientsCount,
+    activeUsers: allUniquePlayers.size, // Truly unique players only
     sessionCounts 
   };
 };
@@ -61,13 +88,20 @@ io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
   broadcastStats();
 
-  socket.on("join:session", (code) => {
+  // 🟢 JOIN SESSION: Now accepts participantId to tag the socket
+  socket.on("join:session", (code, participantId) => {
     if (code) {
       const cleanCode = String(code).trim().toUpperCase();
+      
+      // Tag Socket
+      if (participantId) socket.participantId = participantId;
+      
       socket.join(cleanCode);
       
-      const roomSize = io.sockets.adapter.rooms.get(cleanCode)?.size || 0;
-      io.to(cleanCode).emit("session:update", Array(roomSize).fill({})); 
+      // Update Lobby with UNIQUE count
+      const uniqueCount = getUniqueCountInRoom(cleanCode);
+      io.to(cleanCode).emit("session:update", Array(uniqueCount).fill({})); 
+      
       broadcastStats();
     }
   });
@@ -88,7 +122,6 @@ io.on("connection", (socket) => {
       const now = new Date();
       const remainingTime = session.questionEndsAt ? Math.ceil((new Date(session.questionEndsAt) - now) / 1000) : 0;
 
-      // 🟢 ACTIVE QUESTION
       if (session.currentQuestionId && remainingTime > 0) {
         const question = await Question.findById(session.currentQuestionId).lean();
         if (question) {
@@ -109,10 +142,7 @@ io.on("connection", (socket) => {
         }
       }
 
-      // 🟢 BREAK TIME (Timer Ended) - Force Redirect
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
-      
-      // Sending this forces Lobby -> Result
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),
         rank: idx + 1,

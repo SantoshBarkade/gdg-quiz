@@ -1,7 +1,7 @@
 import Participant from "../models/participant.model.js";
 import Session from "../models/session.model.js";
 import Question from "../models/question.model.js";
-import Response from "../models/response.model.js"; 
+import Response from "../models/response.model.js";
 
 /* =====================================================
    1. JOIN SESSION (RECONNECT OR NEW ENTRY)
@@ -26,6 +26,7 @@ export const joinSession = async (req, res, next) => {
         .json({ success: false, message: "Session closed" });
     }
 
+    // 🟢 RETURN SESSION STATUS (Fix for Smart Redirect)
     if (existingParticipantId) {
       const existingUser = await Participant.findOne({
         _id: existingParticipantId,
@@ -42,6 +43,7 @@ export const joinSession = async (req, res, next) => {
             uniqueCode: existingUser.participantNumber,
             sessionCode: session.sessionCode,
             sessionTitle: session.title || "Untitled Session",
+            sessionStatus: session.status, // 🟢 Added
             totalScore: existingUser.totalScore,
           },
         });
@@ -68,6 +70,7 @@ export const joinSession = async (req, res, next) => {
         uniqueCode: participant.participantNumber,
         sessionCode: session.sessionCode,
         sessionTitle: session.title || "Untitled Session",
+        sessionStatus: session.status, // 🟢 Added
       },
     });
   } catch (err) {
@@ -140,7 +143,6 @@ export const submitAnswer = async (req, res, next) => {
     }
 
     // 2. 🟢 SAVE HISTORY (Critical for "Review Answers" feature)
-    // We catch errors here to prevent duplicates from crashing the request
     try {
       await Response.create({
         questionId,

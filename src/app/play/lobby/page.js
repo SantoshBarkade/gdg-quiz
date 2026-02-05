@@ -23,8 +23,8 @@ export default function LobbyPage() {
 
     setMyName(name || "Player");
 
-    // 1. Join Session
-    socket.emit("join:session", code);
+    // 🟢 PASS PARTICIPANT ID (pId) FOR UNIQUE COUNTING
+    socket.emit("join:session", code, pId);
     
     // 2. Sync to see if game is already running
     socket.emit("sync:state", code);
