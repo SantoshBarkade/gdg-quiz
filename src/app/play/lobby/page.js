@@ -23,13 +23,9 @@ export default function LobbyPage() {
 
     setMyName(name || "Player");
 
-    // 🟢 PASS PARTICIPANT ID (pId) FOR UNIQUE COUNTING
     socket.emit("join:session", code, pId);
-    
-    // 2. Sync to see if game is already running
     socket.emit("sync:state", code);
 
-    // 🟢 3. SMART REDIRECT (Listen for ANY game event)
     const goToGame = () => {
       console.log("🚀 Game is active! Redirecting...");
       setStatusText("Game is Running! Joining...");
@@ -41,7 +37,6 @@ export default function LobbyPage() {
     socket.on("game:ranks", goToGame);
     socket.on("game:result", goToGame);
 
-    // 4. Listen for User Count
     socket.on("session:update", (participantsArray) => {
       if (Array.isArray(participantsArray)) {
         setParticipantCount(participantsArray.length);
@@ -59,6 +54,9 @@ export default function LobbyPage() {
 
   return (
     <div className="lobby-body">
+      {/* 🟢 NEW: Grid Background */}
+      <div className="background-grid"></div>
+
       <div className="lobby-container">
         <header className="lobby-header">
           <div className="logo"><span className="logo-icon">🎯</span><span className="logo-text">GDG Quiz</span></div>
@@ -84,9 +82,36 @@ export default function LobbyPage() {
       </div>
 
       <style jsx global>{`
-        :root { --primary: #2563eb; --bg: #f3f4f6; }
-        .lobby-body { margin: 0; padding: 0; background: var(--bg); min-height: 100vh; display: flex; flex-direction: column; font-family: "Google Sans", sans-serif; }
-        .lobby-container { max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; display: flex; flex-direction: column; padding: 20px; }
+        :root { --primary: #2563eb; --bg: #f8f9fa; }
+        .lobby-body { 
+          margin: 0; padding: 0; 
+          background: var(--bg); 
+          min-height: 100vh; 
+          display: flex; 
+          flex-direction: column; 
+          font-family: "Google Sans", sans-serif; 
+          position: relative; 
+          overflow: hidden;
+        }
+
+        /* 🟢 GRID */
+        .background-grid {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+          background-size: 24px 24px;
+          opacity: 0.6;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .lobby-container { 
+          max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; 
+          display: flex; flex-direction: column; padding: 20px; 
+          position: relative; z-index: 1; 
+        }
+
+        /* ... Rest of styles identical ... */
         .lobby-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .logo { display: flex; gap: 10px; font-size: 24px; font-weight: 800; color: #1f2937; }
         .session-status { background: #dbeafe; color: #1e40af; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
@@ -99,7 +124,7 @@ export default function LobbyPage() {
         .count-number { font-size: 5rem; font-weight: 800; color: #2563eb; line-height: 1; }
         .count-label { font-size: 1rem; color: #6b7280; font-weight: 600; margin-top: 5px; }
         .pulse-ring { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #2563eb; animation: ripple 2s infinite; z-index: 1; }
-        .instruction-text { max-width: 400px; color: #6b7280; line-height: 1.5; background: rgba(255, 255, 255, 0.5); padding: 15px; border-radius: 12px; }
+        .instruction-text { max-width: 400px; color: #6b7280; line-height: 1.5; background: rgba(255, 255, 255, 0.8); padding: 15px; border-radius: 12px; }
         @keyframes pulse { 50% { opacity: 0.5; } }
         @keyframes ripple { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
         @media (max-width: 768px) { .count-number { font-size: 4rem; } .count-card { width: 160px; height: 160px; } }

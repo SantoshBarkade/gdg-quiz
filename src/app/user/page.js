@@ -15,7 +15,6 @@ function UserJoinContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Auto-fill code from URL if present
   useEffect(() => {
     const urlCode = searchParams.get("code");
     if (urlCode) {
@@ -54,13 +53,10 @@ function UserJoinContent() {
       const data = await res.json();
 
       if (data.success) {
-        // ✅ SUCCESS: Save details
         sessionStorage.setItem("SESSION_CODE", code.trim().toUpperCase());
         sessionStorage.setItem("PARTICIPANT_ID", data.data.participantId);
         sessionStorage.setItem("PLAYER_NAME", data.data.name);
 
-        // 🟢 SMART REDIRECT (Late Joiner Fix)
-        // If the server says the game is ACTIVE, go straight to play.
         if (data.data.sessionStatus === "ACTIVE") {
            router.push("/play");
         } else {
@@ -86,7 +82,6 @@ function UserJoinContent() {
           backgroundSize: "24px 24px",
         }}></div>
 
-      {/* 🟢 MODIFIED: Added style={{ borderTop: ... }} to match Quiz Card */}
       <div 
         className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100 z-10 animate-fade-up"
         style={{ borderTop: "6px solid #4285F4" }}
@@ -173,14 +168,24 @@ function UserJoinContent() {
   );
 }
 
+// 🟢 NEW: Custom Loading Screen with Grid
+const LoadingGrid = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans p-4 relative overflow-hidden">
+    <div
+      className="absolute inset-0 z-0 opacity-30 pointer-events-none"
+      style={{
+        backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+      }}></div>
+    <div className="relative z-10 p-8 bg-white rounded-2xl shadow-xl border-t-4 border-blue-500">
+       <h2 className="text-gray-600 font-bold">Loading...</h2>
+    </div>
+  </div>
+);
+
 export default function UserJoin() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
-          Loading...
-        </div>
-      }>
+    <Suspense fallback={<LoadingGrid />}>
       <UserJoinContent />
     </Suspense>
   );
