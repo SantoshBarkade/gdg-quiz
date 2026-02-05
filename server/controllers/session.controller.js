@@ -12,10 +12,10 @@ const runGameLoop = async (sessionCode, io) => {
   console.log(`🚀 Starting Game Loop for ${sessionCode}`);
 
   try {
-    // 1. Fetch all questions for this session
-    const questions = await Question.find({ sessionId: sessionCode }).sort({
-      createdAt: 1,
-    });
+    // 1. Fetch all questions for this session (Optimized with .lean())
+    const questions = await Question.find({ sessionId: sessionCode })
+      .sort({ createdAt: 1 })
+      .lean(); // 🟢 LIGHTWEIGHT QUERY
 
     if (questions.length === 0) {
       console.log("No questions found.");
@@ -60,14 +60,16 @@ const runGameLoop = async (sessionCode, io) => {
         correctAnswer: correctOption ? correctOption.text : "N/A",
       });
 
-      // E. UPDATE RANKS (Calculate scores for live leaderboard)
+      // 🟢 E. UPDATE RANKS (OPTIMIZED - SEND TOP 10)
+      // Uses .lean() for speed and .limit(10) for network safety
       const participants = await Participant.find({ sessionId: sessionCode })
         .sort({ totalScore: -1 })
-        .limit(5)
-        .select("name totalScore");
+        .limit(10) // 🟢 LIMIT TO TOP 10
+        .select("name totalScore")
+        .lean();
 
       const rankList = participants.map((p, idx) => ({
-        id: p._id,
+        id: p._id.toString(), // Ensure ID is string
         rank: idx + 1,
         name: p.name,
         score: p.totalScore,
@@ -83,10 +85,11 @@ const runGameLoop = async (sessionCode, io) => {
     console.log(`🏁 Game Over for ${sessionCode}`);
     await Session.updateOne({ sessionCode }, { status: "FINISHED" });
 
-    // Calculate final winners
+    // Calculate final winners (Top 3)
     const winners = await Participant.find({ sessionId: sessionCode })
       .sort({ totalScore: -1 })
-      .limit(3);
+      .limit(3)
+      .lean(); // 🟢 LIGHTWEIGHT QUERY
 
     io.to(sessionCode).emit("game:over", {
       winners: winners.map((w) => ({ name: w.name, score: w.totalScore })),
