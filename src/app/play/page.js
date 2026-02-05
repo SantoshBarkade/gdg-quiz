@@ -18,7 +18,7 @@ export default function GamePlay() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [result, setResult] = useState(null);
   const [winners, setWinners] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]); 
+  const [leaderboard, setLeaderboard] = useState([]);
   const [stats, setStats] = useState({ correct: 0, incorrect: 0, timeout: 0 });
   const [history, setHistory] = useState([]);
 
@@ -78,7 +78,6 @@ export default function GamePlay() {
 
   const handleRanks = (rankList) => {
     setLeaderboard(rankList);
-    // 🟢 LATE JOINER FIX: If stuck in LOBBY during break, force RESULT view
     if (view === "LOBBY" || view === "LOADING") {
        setView("RESULT");
     }
@@ -141,6 +140,9 @@ export default function GamePlay() {
 
   return (
     <div className="main-body">
+      {/* 🟢 NEW: Background Grid Layer */}
+      <div className="background-grid"></div>
+
       <div className="container">
         <div className="quiz-card">
           {view === "LOBBY" && (
@@ -174,32 +176,25 @@ export default function GamePlay() {
              </div>
           )}
 
-          {/* 🟢 RESULT VIEW (Removed Leaderboard List) */}
           {view === "RESULT" && result && (
             <div className="results-container">
                <div className="trophy-container" style={{ fontSize: "4em" }}>{selectedOption === result.correctAnswer ? "🎉" : selectedOption ? "❌" : "⏰"}</div>
                <h2 className="complete-title">{selectedOption === result.correctAnswer ? <span style={{ color: "#34A853" }}>Correct!</span> : <span style={{ color: "#EA4335" }}>Wrong!</span>}</h2>
                <div className="performance-message" style={{ marginBottom: "20px" }}>Correct Answer: <strong>{result.correctAnswer}</strong></div>
-               
                <div className="stats-row" style={{ marginBottom: "20px" }}>
                 <div className="mini-stat" style={{ background: "#e8f0fe", borderColor: "#4285F4" }}><div className="stat-num" style={{ color: "#4285F4" }}>{player.score}</div><div className="stat-text">Score</div></div>
                 <div className="mini-stat" style={{ background: "#fef9c3", borderColor: "#facc15" }}><div className="stat-num" style={{ color: "#b45309" }}>#{player.rank}</div><div className="stat-text">Current Rank</div></div>
               </div>
-               
                <p style={{ color: "#666", marginTop: "10px" }}>Waiting for next question...</p>
             </div>
           )}
 
-          {/* 🟢 GAMEOVER VIEW (Leaderboard Shown Here) */}
           {view === "GAMEOVER" && (
             <div className="results-container">
                <div className="trophy-icon">🏆</div>
                <h2 className="complete-title">Quiz Complete!</h2>
-               
                <div className="leaderboard-card"><div className="leaderboard-header">Top Winners</div><div className="leaderboard-list">{winners.map((w, idx) => (<div key={idx} className={`leader-item ${idx===0?"gold":idx===1?"silver":idx===2?"bronze":""}`}><span>#{idx+1} {w.name}</span><span className="pts">{w.score} pts</span></div>))}</div></div>
-               
                <div className="performance-card"><div className="perf-label">Your Performance</div><div className="rank-value">Rank: <span>#{player.rank}</span></div><div className="accuracy-label">Score: {player.score} pts</div></div>
-               
                <div className="review-section">
                   <h3 style={{marginTop: "20px", marginBottom: "10px", color:"#333"}}>📝 Your Answers Review</h3>
                   <div className="review-list">
@@ -219,9 +214,47 @@ export default function GamePlay() {
       </div>
       <style jsx global>{`
         * { box-sizing: border-box; }
-        .main-body { font-family: "Segoe UI", sans-serif; background: #fbfbfc; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .container { max-width: 800px; width: 100%; }
-        .quiz-card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .main-body { 
+          font-family: "Segoe UI", sans-serif; 
+          background: #f8f9fa; /* Fallback */
+          min-height: 100vh; 
+          display: flex; 
+          justify-content: center; 
+          align-items: center; 
+          padding: 20px; 
+          position: relative; /* Context for absolute bg */
+          overflow: hidden;
+        }
+        
+        /* 🟢 NEW: Dot Grid Background */
+        .background-grid {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+          background-size: 24px 24px;
+          opacity: 0.6;
+          z-index: 0;
+          pointer-events: none;
+        }
+
+        .container { 
+          max-width: 800px; 
+          width: 100%; 
+          position: relative; /* Sit above background */
+          z-index: 1; 
+        }
+
+        .quiz-card { 
+          background: white; 
+          border-radius: 20px; 
+          padding: 40px; 
+          box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+          /* 🟢 NEW: Border Matching Website Theme */
+          border: 1px solid #e5e7eb;
+          border-top: 6px solid #4285F4; /* Google Blue Accent */
+        }
+
+        /* Review Section */
         .review-section { border-top: 2px dashed #e0e0e0; padding-top: 20px; margin-top: 20px; text-align: left; }
         .review-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .review-card { padding: 15px; border-radius: 12px; border: 1px solid #eee; background: #fafafa; }
@@ -234,6 +267,8 @@ export default function GamePlay() {
         .rev-box { padding: 5px 10px; border-radius: 6px; }
         .user-box { background: #fff; border: 1px solid #ddd; }
         .correct-box { background: #e6fffa; border: 1px solid #b2f5ea; color: #047481; font-weight: bold; }
+        
+        /* Leaderboard & Stats */
         .leaderboard-list { max-height: 250px; overflow-y: auto; }
         .leader-item { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 5px; background: #f9f9f9; border-radius: 8px; }
         .gold { background: #fff8e1; border: 1px solid #ffc107; }
@@ -244,6 +279,8 @@ export default function GamePlay() {
         .correct-val { color: #34A853; font-weight: bold; font-size: 1.5em; }
         .incorrect-val { color: #EA4335; font-weight: bold; font-size: 1.5em; }
         .timeout-val { color: #FBBC05; font-weight: bold; font-size: 1.5em; }
+        
+        /* Timer & Progress */
         .timer-circle-container { position: relative; width: 80px; height: 80px; }
         .timer-svg { position: absolute; top: 0; left: 0; }
         .timer-circle-bg { fill: none; stroke: #e0e0e0; stroke-width: 4; }
@@ -256,6 +293,8 @@ export default function GamePlay() {
         .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .progress-bar { width: 100%; height: 10px; background: #e0e0e0; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: #34a853; transition: width 0.5s ease; }
+        
+        /* Buttons & Text */
         .question-counter { background: #ea4335; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
         .score-display-top { color: #34a853; font-weight: 600; padding: 8px 16px; background: rgba(52, 168, 83, 0.1); border-radius: 20px; }
         .question-text { font-size: 1.5em; color: #333; margin-bottom: 30px; font-weight: 600; text-align: center; }
