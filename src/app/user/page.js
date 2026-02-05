@@ -75,11 +75,16 @@ function UserJoinContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans p-4 relative overflow-hidden">
+      {/* 🟢 UPDATED: Linear Grid Background */}
       <div
-        className="absolute inset-0 z-0 opacity-30 pointer-events-none"
+        className="absolute inset-0 z-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          backgroundColor: "#ffffff",
+          backgroundImage: `
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
         }}></div>
 
       <div 
@@ -168,14 +173,18 @@ function UserJoinContent() {
   );
 }
 
-// 🟢 NEW: Custom Loading Screen with Grid
+// 🟢 UPDATED: Loading Grid to match
 const LoadingGrid = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans p-4 relative overflow-hidden">
     <div
-      className="absolute inset-0 z-0 opacity-30 pointer-events-none"
+      className="absolute inset-0 z-0 pointer-events-none"
       style={{
-        backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
+        backgroundColor: "#ffffff",
+        backgroundImage: `
+          linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px)
+        `,
+        backgroundSize: "40px 40px",
       }}></div>
     <div className="relative z-10 p-8 bg-white rounded-2xl shadow-xl border-t-4 border-blue-500">
        <h2 className="text-gray-600 font-bold">Loading...</h2>

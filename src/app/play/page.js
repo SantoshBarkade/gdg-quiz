@@ -176,13 +176,12 @@ export default function GamePlay() {
 
   return (
     <div className="main-body">
-      {/* 🟢 ALWAYS VISIBLE GRID */}
+      {/* 🟢 UPDATED GRID BACKGROUND */}
       <div className="background-grid"></div>
 
       <div className="container">
         <div className="quiz-card">
           
-          {/* 🟢 LOADING STATE (Now inside the card) */}
           {view === "LOADING" && (
             <div className="start-screen" style={{textAlign: 'center', padding: '40px'}}>
                <div className="loader-spinner"></div>
@@ -384,9 +383,11 @@ export default function GamePlay() {
         .background-grid {
           position: absolute;
           inset: 0;
-          background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-          background-size: 24px 24px;
-          opacity: 0.6;
+          background-color: #ffffff;
+          background-image:
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+          background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
         }

@@ -94,13 +94,15 @@ export default function LobbyPage() {
           overflow: hidden;
         }
 
-        /* 🟢 GRID */
+        /* 🟢 UPDATED GRID */
         .background-grid {
           position: absolute;
           inset: 0;
-          background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-          background-size: 24px 24px;
-          opacity: 0.6;
+          background-color: #ffffff;
+          background-image:
+            linear-gradient(to right, rgba(8, 75, 162, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(8, 75, 162, 0.12) 1px, transparent 1px);
+          background-size: 40px 40px;
           z-index: 0;
           pointer-events: none;
         }
