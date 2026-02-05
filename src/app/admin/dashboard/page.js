@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { getSocket } from "@/lib/socket";
 import { useRouter } from "next/navigation";
 
@@ -12,9 +12,11 @@ export default function Dashboard() {
   const [passcode, setPasscode] = useState("");
   const [sessions, setSessions] = useState([]);
   const [questions, setQuestions] = useState([]);
-  // 🟢 CHANGED: activeUsers
-  const [stats, setStats] = useState({ activeUsers: 0, questions: 0 });
+  
+  // 🟢 NEW STATS STRUCTURE
+  const [stats, setStats] = useState({ activeUsers: 0, sessionCounts: {} });
 
+  // ... (Other state variables: currentSessionCode, managerView, etc. - Keep as is)
   const [currentSessionCode, setCurrentSessionCode] = useState(null);
   const [managerView, setManagerView] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -36,10 +38,15 @@ export default function Dashboard() {
     setTheme(savedTheme);
     document.documentElement.setAttribute("data-theme", savedTheme);
 
-    // 🟢 LISTEN FOR LIVE COUNT
+    // 🟢 LISTEN FOR UPDATED STATS
     socket.on("admin:stats", (data) => {
-      setStats(prev => ({ ...prev, activeUsers: data.activeUsers }));
+      // data = { activeUsers: 5, sessionCounts: { "QUIZ1": 2, "TEST": 1 } }
+      setStats({ 
+        activeUsers: data.activeUsers, 
+        sessionCounts: data.sessionCounts || {} 
+      });
     });
+
     return () => socket.off("admin:stats");
   }, []);
 
@@ -58,6 +65,7 @@ export default function Dashboard() {
     } catch (e) { console.error("Load Error", e); }
   };
 
+  // ... (Keep createSession, startSession, stopSession, deleteSession, resetSession as is)
   const createSession = async () => {
     if (!newTitle || !newCode) return alert("Please fill in both fields.");
     try {
@@ -111,6 +119,7 @@ export default function Dashboard() {
     loadSessions();
   };
 
+  // ... (Keep openQManager, fetchQuestions, etc. as is)
   const openQManager = (code) => {
     setCurrentSessionCode(code);
     setManagerView(true);
@@ -127,7 +136,6 @@ export default function Dashboard() {
       const data = await res.json();
       const qList = data.data || [];
       setQuestions(qList);
-      setStats((prev) => ({ ...prev, questions: qList.length }));
     } catch (e) { console.error(e); }
   };
 
@@ -186,19 +194,31 @@ export default function Dashboard() {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="logo"><div className="logo-icon">🛠</div><span>Admin Panel</span></div>
+        
+        {/* Create Session Card */}
         <div className="card" style={{ padding: "20px", background: "var(--bg-light)", boxShadow: "none" }}>
           <h3 style={{ fontSize: "1rem", marginBottom: "16px" }}>Create Session</h3>
           <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Title (e.g. JS Quiz)" />
           <input value={newCode} onChange={(e) => setNewCode(e.target.value.toUpperCase())} placeholder="Code (e.g. QUIZ101)" />
           <button className="btn-blue" style={{ width: "100%" }} onClick={createSession}>+ Add Session</button>
         </div>
+
         <h3 style={{ fontSize: "0.938rem", color: "var(--text-secondary)", margin: "24px 0 16px 12px", fontWeight: 500 }}>Your Sessions</h3>
+        
+        {/* Session List with Counts */}
         <div>
           {sessions.map((s) => (
             <div key={s._id} className={`session-item ${s.status === "ACTIVE" ? "active-session" : ""}`}>
               <div className="session-info">
                 <div className="session-title">{s.title}</div>
-                <div className="session-meta"><span>{s.sessionCode}</span><span>•</span><span className={`badge ${s.status}`}>{s.status}</span></div>
+                <div className="session-meta">
+                  <span className="code-pill">{s.sessionCode}</span>
+                  <span className={`badge ${s.status}`}>{s.status}</span>
+                  {/* 🟢 NEW: Player Count for this Session */}
+                  <span className="player-count">
+                    👥 {stats.sessionCounts[s.sessionCode] || 0}
+                  </span>
+                </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <button className="btn-blue" onClick={() => openQManager(s.sessionCode)} style={{ gridColumn: "span 2" }}>Manage Questions</button>
@@ -223,20 +243,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 🟢 MODIFIED STATS: Live Users */}
+        {/* Global Stats */}
         <div className="stats-grid">
           <div className="stat-card">
-            <div className="stat-icon">🔴</div>
-            <div className="stat-value">{stats.activeUsers}</div>
-            <div className="stat-label">Live Users Now</div>
+            <div className="stat-icon">🌐</div>
+            {/* Display total connections (minus 1 to vaguely account for admin) */}
+            <div className="stat-value">{Math.max(0, stats.activeUsers - 1)}</div>
+            <div className="stat-label">Total Connections</div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">✓</div>
-            <div className="stat-value">{stats.questions}</div>
-            <div className="stat-label">Total Questions</div>
+            <div className="stat-icon">📋</div>
+            <div className="stat-value">{sessions.length}</div>
+            <div className="stat-label">Total Sessions</div>
           </div>
         </div>
 
+        {/* Manager View (Kept same) */}
         {!managerView ? (
           <div className="card">
             <div className="placeholder-content">
@@ -250,56 +272,29 @@ export default function Dashboard() {
               <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{currentSessionCode}</span></h2>
               <button className="btn-grey" onClick={closeManager}>Close</button>
             </div>
+            {/* ... Question Forms (Same as before) ... */}
             <div className="card">
               <h3>Add New Question</h3>
               <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1rem", padding: "16px" }} />
-              <div>
-                {options.map((opt, idx) => (
-                  <div key={idx} className="option-row">
-                    <input type="radio" name="correct" checked={opt.isCorrect} onChange={() => handleOptionChange(idx, "isCorrect", true)} />
-                    <input className="opt-text" placeholder="Option text..." value={opt.text} onChange={(e) => handleOptionChange(idx, "text", e.target.value)} />
-                    {options.length > 2 && <button className="btn-red" onClick={() => setOptions(options.filter((_, i) => i !== idx))}>✕</button>}
-                  </div>
-                ))}
-              </div>
+              <div>{options.map((opt, idx) => (<div key={idx} className="option-row"><input type="radio" name="correct" checked={opt.isCorrect} onChange={() => handleOptionChange(idx, "isCorrect", true)} /><input className="opt-text" placeholder="Option text..." value={opt.text} onChange={(e) => handleOptionChange(idx, "text", e.target.value)} />{options.length > 2 && <button className="btn-red" onClick={() => setOptions(options.filter((_, i) => i !== idx))}>✕</button>}</div>))}</div>
               <button className="btn-grey" style={{ marginTop: "10px" }} onClick={() => setOptions([...options, { text: "", isCorrect: false }])}>+ Add Option</button>
               <div style={{ marginTop: "24px" }}><button className="btn-blue" onClick={saveQuestion}>Save Question</button></div>
             </div>
             <h3 style={{ margin: "32px 0 16px 0" }}>Existing Questions</h3>
-            <div>
-              {questions.map((q, index) => (
-                <div key={q._id} className="question-box">
-                  <div className="q-header">
-                    <div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-                      <span className="question-number">{index + 1}</span><strong>{q.questionText}</strong>
-                    </div>
-                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                      <div className="reorder-controls">
-                        <button className="reorder-btn" disabled={index === 0} onClick={() => moveQuestion(q._id, "up")}>▲</button>
-                        <button className="reorder-btn" disabled={index === questions.length - 1} onClick={() => moveQuestion(q._id, "down")}>▼</button>
-                      </div>
-                      <div className="q-actions">
-                        <button className="btn-outline" onClick={() => setPreviewQ(q)}>Preview</button>
-                        <button className="btn-blue" onClick={() => openUpdateModal(q)}>Update</button>
-                        <button className="btn-red" onClick={() => deleteQuestion(q._id)}>Delete</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div>{questions.map((q, index) => (<div key={q._id} className="question-box"><div className="q-header"><div style={{ display: "flex", alignItems: "center", flex: 1 }}><span className="question-number">{index + 1}</span><strong>{q.questionText}</strong></div><div style={{ display: "flex", gap: "12px", alignItems: "center" }}><div className="reorder-controls"><button className="reorder-btn" disabled={index === 0} onClick={() => moveQuestion(q._id, "up")}>▲</button><button className="reorder-btn" disabled={index === questions.length - 1} onClick={() => moveQuestion(q._id, "down")}>▼</button></div><div className="q-actions"><button className="btn-outline" onClick={() => setPreviewQ(q)}>Preview</button><button className="btn-blue" onClick={() => openUpdateModal(q)}>Update</button><button className="btn-red" onClick={() => deleteQuestion(q._id)}>Delete</button></div></div></div></div>))}</div>
           </div>
         )}
       </main>
 
-      {/* Modals & CSS (Keep Existing) */}
+      {/* Modals & CSS */}
       {previewQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setPreviewQ(null)}><div className="modal-content"><span className="close" onClick={() => setPreviewQ(null)}>✕</span><h2>Preview</h2><p>{previewQ.questionText}</p></div></div>)}
       {updateQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setUpdateQ(null)}><div className="modal-content"><span className="close" onClick={() => setUpdateQ(null)}>✕</span><h2>Update</h2><input value={updateText} onChange={(e) => setUpdateText(e.target.value)} /><button className="btn-blue" onClick={confirmUpdate}>Save</button></div></div>)}
       
       <style jsx global>{`
+        /* ... (Keep existing styles) ... */
         @import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap");
-        :root { --google-blue: #4285f4; --google-red: #ea4335; --google-yellow: #fbbc05; --google-green: #34a853; --white: #ffffff; --bg-light: #f8f9fa; --text-primary: #202124; --text-secondary: #5f6368; --border-light: #dadce0; --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); --shadow-md: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15); --shadow-lg: 0 2px 6px 2px rgba(60,64,67,0.15), 0 8px 24px 4px rgba(60,64,67,0.15); }
-        [data-theme="dark"] { --white: #1f1f1f; --bg-light: #121212; --text-primary: #e8eaed; --text-secondary: #9aa0a6; --border-light: #3c4043; --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.3), 0 1px 3px 1px rgba(0,0,0,0.15); --shadow-md: 0 1px 3px 0 rgba(0,0,0,0.3), 0 4px 8px 3px rgba(0,0,0,0.15); --shadow-lg: 0 2px 6px 2px rgba(0,0,0,0.15), 0 8px 24px 4px rgba(0,0,0,0.15); }
+        :root { --google-blue: #4285f4; --google-red: #ea4335; --google-yellow: #fbbc05; --google-green: #34a853; --white: #ffffff; --bg-light: #f8f9fa; --text-primary: #202124; --text-secondary: #5f6368; --border-light: #dadce0; --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
+        [data-theme="dark"] { --white: #1f1f1f; --bg-light: #121212; --text-primary: #e8eaed; --text-secondary: #9aa0a6; --border-light: #3c4043; }
         body { margin: 0; font-family: "Roboto", sans-serif; background: var(--bg-light); color: var(--text-primary); }
         .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
         .sidebar { background: var(--white); padding: 24px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border-light); }
@@ -310,14 +305,10 @@ export default function Dashboard() {
         .page-title { font-family: "Google Sans", sans-serif; font-size: 1.75rem; font-weight: 700; color: var(--text-primary); }
         .navbar-actions { display: flex; align-items: center; gap: 12px; }
         .leaderboard-link { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, var(--google-blue), var(--google-green)); color: white; text-decoration: none; border-radius: 12px; font-family: "Google Sans", sans-serif; font-weight: 600; font-size: 0.875rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .leaderboard-link:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-        .leaderboard-icon { font-size: 20px; }
         .theme-toggle { background: var(--bg-light); border: 2px solid var(--border-light); cursor: pointer; padding: 10px; display: flex; align-items: center; justify-content: center; border-radius: 12px; width: 44px; height: 44px; }
-        .theme-toggle svg { width: 24px; height: 24px; color: var(--text-primary); }
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 32px; }
         .stat-card { background: var(--white); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
-        .stat-card:nth-child(1)::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--google-blue); }
-        .stat-card:nth-child(2)::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--google-green); }
+        .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--google-blue); }
         .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; font-size: 24px; background: rgba(66, 133, 244, 0.1); color: var(--google-blue); }
         .stat-value { font-family: "Google Sans", sans-serif; font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
         .stat-label { font-size: 0.875rem; color: var(--text-secondary); font-weight: 500; }
@@ -336,7 +327,9 @@ export default function Dashboard() {
         .session-item { padding: 20px; background: var(--white); border: 2px solid var(--border-light); border-radius: 12px; margin-bottom: 12px; }
         .active-session { border-color: var(--google-green); background: rgba(52, 168, 83, 0.03); }
         .session-title { font-weight: 700; font-size: 1.063rem; color: var(--text-primary); margin-bottom: 6px; }
-        .session-meta { font-size: 0.875rem; color: var(--text-secondary); display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+        .session-meta { font-size: 0.875rem; color: var(--text-secondary); display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .code-pill { background: #e8f0fe; color: var(--google-blue); padding: 4px 8px; border-radius: 6px; font-weight: 700; }
+        .player-count { background: #fce8e6; color: #c5221f; padding: 4px 8px; border-radius: 6px; font-weight: 600; margin-left: auto; }
         .badge { padding: 4px 12px; font-size: 0.75rem; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
         .WAITING { background: rgba(251, 188, 5, 0.15); color: #e37400; }
         .ACTIVE { background: rgba(52, 168, 83, 0.15); color: #188038; }
