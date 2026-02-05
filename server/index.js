@@ -6,152 +6,102 @@ import express from "express";
 import cors from "cors";
 import dns from "dns";
 
-// 1. IMPORT MODELS
 import Question from "./models/question.model.js";
 import Session from "./models/session.model.js";
 
-// 2. IMPORT ROUTES
 import adminRoutes from "./routes/admin.routes.js";
 import participantRoutes from "./routes/participant.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
 import questionRoutes from "./routes/question.routes.js";
 
-// Fix for some network environments
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
-
 dotenv.config();
 
-/* ================= APP SETUP ================= */
 const app = express();
-
-// ✅ CORS: Allow connections from ANYWHERE
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  }),
-);
-
+app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 app.use(express.json());
 
-// Basic Route
-app.get("/", (req, res) => {
-  res.send("GDG Quiz Backend is Running 🚀");
-});
+app.get("/", (req, res) => res.send("GDG Quiz Backend is Running 🚀"));
 
-/* ================= ROUTES ================= */
 app.use("/api/admin", adminRoutes);
 app.use("/api/participants", participantRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/questions", questionRoutes);
 
-/* ================= DATABASE ================= */
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/gdg-quiz";
-
-mongoose
-  .connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
-  .then(async () => {
-    console.log("✅ MongoDB Connected");
-  })
+mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 })
+  .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ Mongo Error:", err.message));
 
-/* ================= SOCKET SERVER ================= */
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
-
-// Make 'io' accessible in Controllers
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 app.set("io", io);
 
 io.on("connection", (socket) => {
   console.log("🔌 Connected:", socket.id);
 
-  // 1. JOIN ROOM
+  // 🟢 1. BROADCAST LIVE COUNT TO ADMIN
+  io.emit("admin:stats", { activeUsers: io.engine.clientsCount });
+
   socket.on("join:session", (code) => {
     if (code) {
-      const cleanCode = String(code).trim().toUpperCase();
-      socket.join(cleanCode);
-      console.log(`User ${socket.id} joined room: ${cleanCode}`);
-
-      // Update lobby count
-      const roomSize = io.sockets.adapter.rooms.get(cleanCode)?.size || 0;
-      io.to(cleanCode).emit("session:update", Array(roomSize).fill({}));
+      socket.join(String(code).trim().toUpperCase());
     }
   });
 
-  // 2. SYNC STATE (For Reconnecting Users & Late Joiners)
+  // 2. SYNC STATE
   socket.on("sync:state", async (sessionCode) => {
     try {
       const code = String(sessionCode).trim().toUpperCase();
       const session = await Session.findOne({ sessionCode: code });
 
-      // If game isn't active or no question is currently running
-      if (
-        !session ||
-        session.status !== "ACTIVE" ||
-        !session.currentQuestionId
-      ) {
-        socket.emit("sync:idle");
-        return;
+      if (!session) { socket.emit("error", "Session not found"); return; }
+      if (session.status === "WAITING") { socket.emit("sync:idle"); return; }
+      if (session.status === "FINISHED") { socket.emit("game:over", {}); return; }
+
+      const now = new Date();
+      if (session.currentQuestionId && session.questionEndsAt > now) {
+        const remainingTime = Math.ceil((new Date(session.questionEndsAt) - now) / 1000);
+        const question = await Question.findById(session.currentQuestionId).lean();
+
+        if (question) {
+          const allQuestions = await Question.find({ sessionId: code }).sort({ createdAt: 1 }).select("_id").lean();
+          const qIndex = allQuestions.findIndex((q) => q._id.toString() === question._id.toString());
+          
+          socket.emit("game:question", {
+            qNum: qIndex + 1,
+            total: allQuestions.length,
+            time: remainingTime,
+            question: {
+              _id: question._id,
+              questionText: question.questionText,
+              options: question.options.map((o) => ({ text: o.text })),
+            },
+            isSync: true,
+          });
+          return;
+        }
       }
 
-      // Check time remaining
-      const remaining = session.questionEndsAt
-        ? Math.floor(
-            (new Date(session.questionEndsAt).getTime() - Date.now()) / 1000,
-          )
-        : 0;
+      // If in break, send ranks
+      const topPlayers = await mongoose.model("Participant").find({ sessionId: code })
+        .sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
 
-      if (remaining <= 0) {
-        // If time is up, likely in "Result" phase
-        socket.emit("sync:idle");
-        return;
-      }
-
-      // If time remains, send the current question immediately
-      const q = await Question.findById(session.currentQuestionId);
-      if (!q) return;
-
-      // 🟢 FIX: Calculate real Q number and Total for the Progress Bar
-      const allQuestions = await Question.find({ sessionId: code })
-        .sort({ createdAt: 1 })
-        .select("_id");
-
-      const total = allQuestions.length;
-      const currentIdx = allQuestions.findIndex(
-        (x) => x._id.toString() === q._id.toString(),
-      );
-      const qNum = currentIdx !== -1 ? currentIdx + 1 : 1;
-
-      socket.emit("game:question", {
-        qNum: qNum, // ✅ Real Number (e.g., 1)
-        total: total, // ✅ Real Total (e.g., 10)
-        time: remaining,
-        question: {
-          _id: q._id,
-          questionText: q.questionText,
-          options: q.options.map((o) => ({ text: o.text })), // Hide Correct Answer
-        },
-        isSync: true,
-      });
-    } catch (e) {
-      console.error("❌ Sync error:", e);
-    }
+      socket.emit("game:ranks", topPlayers.map((p, idx) => ({
+        id: p._id.toString(),
+        rank: idx + 1,
+        name: p.name,
+        score: p.totalScore,
+      })));
+    } catch (e) { console.error("Sync Error:", e); }
   });
 
-  // 3. DISCONNECT
   socket.on("disconnect", () => {
     console.log("❌ Disconnected:", socket.id);
+    // 🟢 UPDATE COUNT ON DISCONNECT
+    io.emit("admin:stats", { activeUsers: io.engine.clientsCount });
   });
 });
 
-/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`),
-);
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
