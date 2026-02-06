@@ -22,7 +22,15 @@ export default function GamePlay() {
   const [stats, setStats] = useState({ correct: 0, incorrect: 0, timeout: 0 });
   const [history, setHistory] = useState([]);
 
+  // Use Ref to track view state inside socket callbacks without dependencies
+  const viewRef = useRef("LOADING");
   const timerRef = useRef(null);
+
+  // Helper to update state and ref
+  const setViewState = (newView) => {
+    viewRef.current = newView;
+    setView(newView);
+  };
 
   useEffect(() => {
     const pId = sessionStorage.getItem("PARTICIPANT_ID");
@@ -36,26 +44,30 @@ export default function GamePlay() {
 
     setPlayer((prev) => ({ ...prev, name: name || "Player" }));
     
-    // 🟢 1. DEFINE HANDLERS
+    // 🟢 HANDLERS
     const onQuestion = (data) => handleNewQuestion(data);
     const onResult = (data) => handleResult(data);
+    
     const onRanks = (rankList) => {
+        // 🔴 SAFETY CHECK: Don't switch if Game Over (Fixes Blank Screen)
+        if (viewRef.current === "GAMEOVER") return;
+
         setLeaderboard(rankList);
-        // Update my personal rank/score from the full list
         const me = rankList.find((p) => p.id === pId);
         if (me) {
           setPlayer((prev) => ({ ...prev, rank: me.rank, score: me.score }));
         }
-        // Only switch view if we are waiting/loading (don't override Game Over)
-        if (view === "LOBBY" || view === "LOADING") {
-           setView("RESULT");
+        
+        // Only switch if waiting
+        if (viewRef.current === "LOBBY" || viewRef.current === "LOADING") {
+           setViewState("RESULT");
         }
     };
-    const onGameOver = (data) => handleGameOver(data);
-    const onIdle = () => setView("LOBBY");
+
+    const onGameOver = (data) => handleGameOver(data, pId); // Pass pId
+    const onIdle = () => setViewState("LOBBY");
     const onForceStop = () => { alert("Host ended session."); router.push("/"); };
 
-    // 🟢 2. REGISTER LISTENERS
     socket.on("game:question", onQuestion);
     socket.on("game:result", onResult);
     socket.on("game:ranks", onRanks);
@@ -63,7 +75,6 @@ export default function GamePlay() {
     socket.on("sync:idle", onIdle);
     socket.on("game:force_stop", onForceStop);
 
-    // 🟢 3. JOIN & SYNC
     socket.emit("join:session", code, pId);
     socket.emit("sync:state", code);
 
@@ -82,10 +93,10 @@ export default function GamePlay() {
       socket.off("connect");
       clearInterval(timerRef.current);
     };
-  }, []); // Remove dependencies to avoid re-binding loops
+  }, []);
 
   const handleNewQuestion = (data) => {
-    setView("QUESTION");
+    setViewState("QUESTION");
     setQuestion(data);
     setSelectedOption(null);
     setResult(null);
@@ -103,19 +114,25 @@ export default function GamePlay() {
 
   const handleResult = (data) => {
     clearInterval(timerRef.current);
-    setView("RESULT");
+    setViewState("RESULT");
     setResult(data);
     if (data.correctAnswer === selectedOption) triggerConfetti();
   };
 
-  const handleGameOver = async (data) => {
+  const handleGameOver = async (data, pId) => {
     clearInterval(timerRef.current);
-    setView("GAMEOVER");
+    setViewState("GAMEOVER");
     
-    // 🟢 Fix: Ensure we use the normalized data
     if (data.winners) setWinners(data.winners);
+
+    // 🟢 RECOVER MY RANK (Fix for Refresh)
+    if (data.leaderboard && pId) {
+        const me = data.leaderboard.find(p => p.id === pId);
+        if (me) {
+            setPlayer(prev => ({ ...prev, rank: me.rank, score: me.score }));
+        }
+    }
     
-    // Confetti
     const duration = 3000;
     const end = Date.now() + duration;
     (function frame() {
@@ -125,15 +142,18 @@ export default function GamePlay() {
     }());
 
     try {
-      const pId = sessionStorage.getItem("PARTICIPANT_ID");
-      const res = await fetch(`${API_URL}/participants/history/${pId}`);
-      const json = await res.json();
-      if (json.success) {
-        setHistory(json.data);
-        const correct = json.data.filter((h) => h.status === "CORRECT").length;
-        const incorrect = json.data.filter((h) => h.status === "WRONG").length;
-        const timeout = json.data.filter((h) => h.status === "TIMEOUT").length || 0;
-        setStats({ correct, incorrect, timeout });
+      // Fetch History if not already passed (Optional)
+      const currentPId = pId || sessionStorage.getItem("PARTICIPANT_ID");
+      if(currentPId) {
+          const res = await fetch(`${API_URL}/participants/history/${currentPId}`);
+          const json = await res.json();
+          if (json.success) {
+            setHistory(json.data);
+            const correct = json.data.filter((h) => h.status === "CORRECT").length;
+            const incorrect = json.data.filter((h) => h.status === "WRONG").length;
+            const timeout = json.data.filter((h) => h.status === "TIMEOUT").length || 0;
+            setStats({ correct, incorrect, timeout });
+          }
       }
     } catch (e) { console.error("History Error", e); }
   };
@@ -190,7 +210,7 @@ export default function GamePlay() {
               <div key={idx} className={`winner-card rank-${idx + 1}`}>
                 <div className="medal-icon">{getRankIcon(idx)}</div>
                 <div className="winner-name">{w.name}</div>
-                {/* 🟢 Fix: Use .score (normalized from backend) */}
+                {/* 🟢 Normalized Score Display */}
                 <div className="winner-score">{w.score} pts</div>
               </div>
             ))}
@@ -235,6 +255,7 @@ export default function GamePlay() {
       ) : (
         <div className="container">
           <div className="quiz-card">
+            
             {view === "LOADING" && (
               <div style={{textAlign: 'center', padding: '60px'}}>
                  <div className="loader-spinner"></div>
@@ -303,6 +324,7 @@ export default function GamePlay() {
         .background-grid { position: fixed; inset: 0; background-image: linear-gradient(to right, rgba(8, 75, 162, 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(8, 75, 162, 0.08) 1px, transparent 1px); background-size: 40px 40px; z-index: 0; pointer-events: none; }
         .container { max-width: 800px; width: 100%; position: relative; z-index: 1; }
         .quiz-card { background: white; border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08); border: 1px solid #f0f0f0; border-top: 6px solid #4285F4; transition: all 0.3s ease; }
+        
         .results-container { text-align: center; animation: slideUpFade 0.5s ease-out forwards; }
         .result-icon-anim { font-size: 5rem; margin-bottom: 5px; animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block; }
         .redirect-container { margin-top: 20px; opacity: 0; animation: fadeIn 0.5s ease 0.5s forwards; }
@@ -312,6 +334,7 @@ export default function GamePlay() {
         @keyframes fillBar { 0% { width: 0%; } 100% { width: 100%; } }
         @keyframes popBounce { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
         @keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
         .game-over-wrapper { width: 100%; max-width: 600px; position: relative; z-index: 2; text-align: center; padding-bottom: 40px; }
         .game-over-header h1 { font-size: 2.5rem; color: #202124; margin: 10px 0; }
         .game-over-header p { color: #5f6368; }

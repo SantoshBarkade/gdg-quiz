@@ -97,27 +97,35 @@ io.on("connection", (socket) => {
       if (!session) return socket.emit("error", "Session not found");
       if (session.status === "WAITING") return socket.emit("sync:idle");
       
-      // 🟢 FIX: Handle FINISHED state robustly
+      // 🟢 FIX: Single Event for Game Over (Prevent Race Condition)
       if (session.status === "FINISHED") {
-        // 1. Get Winners & Standardize Data (Map totalScore -> score)
-        const winnersRaw = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(3).lean();
+        // 1. Get Top 3 Winners (Normalized Data)
+        const winnersRaw = await Participant.find({ sessionId: code })
+          .sort({ totalScore: -1, createdAt: 1 }) // Tie-breaker: joined earlier
+          .limit(3)
+          .lean();
+          
         const winners = winnersRaw.map(w => ({
           name: w.name,
-          score: w.totalScore, // 🟢 Normalize here
+          score: w.totalScore || 0, // Ensure score exists
           participantNumber: w.participantNumber
         }));
-        
-        socket.emit("game:over", { winners });
 
-        // 2. Send Full Ranks (So user can find their own rank on refresh)
-        const allPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).select("name totalScore").lean();
-        socket.emit("game:ranks", allPlayers.map((p, idx) => ({
+        // 2. Get All Players (For "Your Rank" calculation)
+        const allPlayersRaw = await Participant.find({ sessionId: code })
+          .sort({ totalScore: -1, createdAt: 1 })
+          .select("name totalScore")
+          .lean();
+
+        const leaderboard = allPlayersRaw.map((p, idx) => ({
           id: p._id.toString(),
           rank: idx + 1,
           name: p.name,
-          score: p.totalScore,
-        })));
+          score: p.totalScore || 0,
+        }));
         
+        // 🟢 Send EVERYTHING in one packet
+        socket.emit("game:over", { winners, leaderboard });
         return; 
       }
 
@@ -144,12 +152,13 @@ io.on("connection", (socket) => {
         }
       }
 
+      // Interim Leaderboard (Between Questions)
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),
         rank: idx + 1,
         name: p.name,
-        score: p.totalScore,
+        score: p.totalScore || 0,
       })));
 
     } catch (e) {
