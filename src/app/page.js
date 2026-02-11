@@ -5,6 +5,25 @@ import Head from "next/head";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
+// 🟢 NEW: Custom SVG Logo Component designed for GDG Quiz
+const ProjectLogo = () => (
+  <svg width="42" height="42" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Red Top-Left */}
+    <path d="M20 4H12C7.58172 4 4 7.58172 4 12V20H20V4Z" fill="#EA4335"/>
+    {/* Blue Top-Right */}
+    <path d="M36 12C36 7.58172 32.4183 4 28 4H20V20H36V12Z" fill="#4285F4"/>
+    {/* Yellow Bottom-Left */}
+    <path d="M4 20V28C4 32.4183 7.58172 36 12 36H20V20H4Z" fill="#FBBC05"/>
+    {/* Green Bottom-Right (with Chat Tail) */}
+    <path d="M20 20H36V28C36 32.4183 32.4183 36 28 36H20V20Z" fill="#34A853"/>
+    <path d="M36 28L40 40L28 36H36V28Z" fill="#34A853"/>
+    {/* White Center Circle */}
+    <circle cx="20" cy="20" r="9" fill="white" />
+    {/* Blue Quiz Checkmark */}
+    <path d="M16 20.5L19 23.5L25 16" stroke="#4285F4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 export default function GDGLandingPage() {
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
@@ -110,8 +129,16 @@ export default function GDGLandingPage() {
           display: flex;
           align-items: center;
           text-decoration: none;
+          gap: 12px;
         }
         
+        .logo-text {
+          font-family: "Poppins";
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: #202124;
+        }
+
         nav {
           display: flex;
           align-items: center;
@@ -522,6 +549,9 @@ export default function GDGLandingPage() {
           .navbar {
             padding: 1rem 3%;
           }
+          .logo-text {
+            font-size: 1.2rem;
+          }
         }
         @media (max-width: 480px) {
           .main-heading {
@@ -536,12 +566,10 @@ export default function GDGLandingPage() {
 
       <div className="app-container">
         <header className="navbar">
+          {/* 🟢 NEW: Integrated Custom Logo alongside text */}
           <Link href="/" className="logo">
-            <img 
-              src="/assests/logo.png" 
-              alt="GDG Logo" 
-              style={{ height: "45px", width: "auto" }} 
-            />
+            <ProjectLogo />
+            <span className="logo-text">GDG SKNCOE</span>
           </Link>
           
           <nav>
@@ -590,7 +618,6 @@ export default function GDGLandingPage() {
                 </span>
               </p>
               
-              {/* 🟢 CHANGED: Replaced button with a direct external link */}
               <a 
                 href="https://gdg.community.dev/gdg-on-campus-shrimati-kashibai-navale-college-of-engineering-pune-india/" 
                 target="_blank" 
@@ -713,12 +740,9 @@ export default function GDGLandingPage() {
           <div className="footer-container">
             <div className="footer-section footer-brand">
               <div className="footer-logo-container">
-                <img
-                  src="/assests/logo.png"
-                  alt="GDG Logo"
-                  className="footer-logo-img"
-                />
-                <div className="footer-logo-text">
+                {/* Embedded custom SVG here as well for consistency */}
+                <ProjectLogo />
+                <div className="footer-logo-text" style={{ marginLeft: '10px' }}>
                   <span className="on-campus">ON CAMPUS</span>
                   <span className="college-name">
                     Smt. Kashibai Navale College of Engineering
