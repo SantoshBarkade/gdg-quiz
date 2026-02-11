@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [previewQ, setPreviewQ] = useState(null);
   const [updateQ, setUpdateQ] = useState(null);
   const [updateText, setUpdateText] = useState("");
+  const [updateOptions, setUpdateOptions] = useState([]); // NEW: State for update modal options
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
@@ -143,6 +144,18 @@ export default function Dashboard() {
     setOptions(newOpts);
   };
 
+  // NEW: Handler for update options
+  const handleUpdateOptionChange = (index, field, value) => {
+    const newOpts = [...updateOptions];
+    if (field === "isCorrect") {
+      newOpts.forEach((o) => (o.isCorrect = false));
+      newOpts[index].isCorrect = true;
+    } else {
+      newOpts[index][field] = value;
+    }
+    setUpdateOptions(newOpts);
+  };
+
   const saveQuestion = async () => {
     if (!qText || options.some((o) => !o.text)) return alert("Question and Options cannot be empty");
     if (!options.some((o) => o.isCorrect)) return alert("Select at least one correct answer");
@@ -170,16 +183,30 @@ export default function Dashboard() {
     fetchQuestions(currentSessionCode);
   };
 
-  const openUpdateModal = (q) => { setUpdateQ(q); setUpdateText(q.questionText); };
+  // NEW: Setup update modal state
+  const openUpdateModal = (q) => { 
+    setUpdateQ(q); 
+    setUpdateText(q.questionText); 
+    setUpdateOptions(JSON.parse(JSON.stringify(q.options))); 
+  };
 
+  // NEW: Save updated question and options
   const confirmUpdate = async () => {
     if (!updateText || !updateQ) return;
+    if (!updateOptions.some((o) => o.isCorrect)) return alert("Select at least one correct answer");
+    
     await fetch(`${API_URL}/questions/${updateQ._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", "admin-passcode": passcode },
-      body: JSON.stringify({ sessionId: currentSessionCode, questionText: updateText, options: updateQ.options, marks: 10 }),
+      body: JSON.stringify({ 
+        sessionId: currentSessionCode, 
+        questionText: updateText, 
+        options: updateOptions, 
+        marks: 10 
+      }),
     });
-    setUpdateQ(null); fetchQuestions(currentSessionCode);
+    setUpdateQ(null); 
+    fetchQuestions(currentSessionCode);
   };
 
   return (
@@ -228,11 +255,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 🟢 GLOBAL STATS (CORRECTED) */}
+        {/* 🟢 GLOBAL STATS */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
-            {/* Show raw count, as we now filter unique players */}
             <div className="stat-value">{stats.activeUsers}</div>
             <div className="stat-label">Total Connections</div>
           </div>
@@ -267,9 +293,61 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Modals & CSS (Keep same) */}
+      {/* Modals & CSS */}
       {previewQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setPreviewQ(null)}><div className="modal-content"><span className="close" onClick={() => setPreviewQ(null)}>✕</span><h2>Preview</h2><p>{previewQ.questionText}</p></div></div>)}
-      {updateQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setUpdateQ(null)}><div className="modal-content"><span className="close" onClick={() => setUpdateQ(null)}>✕</span><h2>Update</h2><input value={updateText} onChange={(e) => setUpdateText(e.target.value)} /><button className="btn-blue" onClick={confirmUpdate}>Save</button></div></div>)}
+      
+      {/* NEW: Expanded Update Modal */}
+      {updateQ && (
+        <div className="modal show" onClick={(e) => e.target.className.includes("modal") && setUpdateQ(null)}>
+          <div className="modal-content" style={{ maxWidth: "700px" }}>
+            <span className="close" onClick={() => setUpdateQ(null)}>✕</span>
+            <h2>Update Question</h2>
+            
+            <input 
+              value={updateText} 
+              onChange={(e) => setUpdateText(e.target.value)} 
+              placeholder="Question Text" 
+              style={{ fontSize: "1.1rem", padding: "12px", marginBottom: "20px" }} 
+            />
+            
+            <div style={{ marginBottom: "20px" }}>
+              {updateOptions.map((opt, idx) => (
+                <div key={idx} className="option-row" style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center" }}>
+                  <input 
+                    type="radio" 
+                    name="updateCorrect" 
+                    checked={opt.isCorrect} 
+                    onChange={() => handleUpdateOptionChange(idx, "isCorrect", true)} 
+                    style={{ width: "20px", height: "20px", cursor: "pointer", margin: 0 }}
+                  />
+                  <input 
+                    className="opt-text" 
+                    placeholder="Option text..." 
+                    value={opt.text} 
+                    onChange={(e) => handleUpdateOptionChange(idx, "text", e.target.value)} 
+                    style={{ flex: 1, marginBottom: 0 }}
+                  />
+                  {updateOptions.length > 2 && (
+                    <button className="btn-red" onClick={() => setUpdateOptions(updateOptions.filter((_, i) => i !== idx))}>✕</button>
+                  )}
+                </div>
+              ))}
+              <button 
+                className="btn-grey" 
+                style={{ marginTop: "10px" }} 
+                onClick={() => setUpdateOptions([...updateOptions, { text: "", isCorrect: false }])}
+              >
+                + Add Option
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button className="btn-grey" onClick={() => setUpdateQ(null)}>Cancel</button>
+              <button className="btn-blue" onClick={confirmUpdate}>Save Changes</button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <style jsx global>{`
         /* ... existing styles ... */
@@ -322,14 +400,12 @@ export default function Dashboard() {
         .reorder-controls { display: flex; flex-direction: column; gap: 4px; }
         .reorder-btn { padding: 4px 8px; font-size: 12px; min-width: 32px; background: var(--border-light); color: var(--text-primary); border-radius: 6px; }
         .reorder-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .option-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
-        .option-row input[type="radio"] { width: 20px; height: 20px; margin-bottom: 0; cursor: pointer; accent-color: var(--google-blue); }
         .placeholder-content { text-align: center; padding: 80px 20px; }
         .placeholder-icon { font-size: 64px; margin-bottom: 24px; opacity: 0.3; }
         .placeholder-text { font-size: 1.25rem; color: var(--text-secondary); }
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); animation: fadeIn 0.2s ease; }
         .modal.show { display: flex; align-items: center; justify-content: center; }
-        .modal-content { background: var(--white); padding: 32px; width: 90%; max-width: 600px; border-radius: 16px; box-shadow: var(--shadow-lg); position: relative; animation: slideUp 0.3s ease; }
+        .modal-content { background: var(--white); padding: 32px; width: 90%; max-width: 600px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; animation: slideUp 0.3s ease; }
         .close { position: absolute; right: 20px; top: 20px; font-size: 24px; cursor: pointer; color: var(--text-secondary); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
         .close:hover { background: var(--bg-light); color: var(--text-primary); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }

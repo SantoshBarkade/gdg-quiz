@@ -13,7 +13,9 @@ function UserJoinContent() {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  
+  // 🔥 NEW: Toast State
+  const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
   useEffect(() => {
     const urlCode = searchParams.get("code");
@@ -22,13 +24,18 @@ function UserJoinContent() {
     }
   }, [searchParams]);
 
+  // 🔥 NEW: Toast Handler
+  const showToast = (message, type = "error") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "" }), 4000);
+  };
+
   const handleJoin = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     if (!name.trim() || !code.trim()) {
-      setError("Please enter both your name and the session code.");
+      showToast("Please enter both your name and the session code.");
       setLoading(false);
       return;
     }
@@ -57,17 +64,21 @@ function UserJoinContent() {
         sessionStorage.setItem("PARTICIPANT_ID", data.data.participantId);
         sessionStorage.setItem("PLAYER_NAME", data.data.name);
 
-        if (data.data.sessionStatus === "ACTIVE") {
-           router.push("/play");
-        } else {
-           router.push("/play/lobby");
-        }
+        showToast("Joined successfully! Redirecting...", "success");
+        
+        setTimeout(() => {
+          if (data.data.sessionStatus === "ACTIVE") {
+             router.push("/play");
+          } else {
+             router.push("/play/lobby");
+          }
+        }, 1000);
       } else {
-        setError(data.message || "Failed to join session.");
+        showToast(data.message || "Failed to join session.");
       }
     } catch (err) {
       console.error("Join Error:", err);
-      setError(err.message || "Could not connect to server.");
+      showToast(err.message || "Could not connect to server.");
     } finally {
       setLoading(false);
     }
@@ -75,6 +86,18 @@ function UserJoinContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white font-sans p-4 relative overflow-hidden">
+      
+      {/* 🟢 Floating Toast Notification */}
+      {toast.show && (
+        <div 
+          className={`fixed top-5 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-2xl text-white font-semibold text-sm transition-all animate-bounce-in ${
+            toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       {/* 🟢 Linear Grid Background */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -91,7 +114,6 @@ function UserJoinContent() {
         style={{ borderTop: "6px solid #4285F4" }}
       >
         <div className="text-center mb-8">
-          {/* 🟢 CHANGED: Larger Logo Image */}
           <img 
             src="/assests/logo.png" 
             alt="GDG Logo" 
@@ -135,12 +157,6 @@ function UserJoinContent() {
             />
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm text-center rounded-lg border border-red-100 animate-pulse">
-              {error}
-            </div>
-          )}
-
           <button
             disabled={loading}
             type="submit"
@@ -158,7 +174,7 @@ function UserJoinContent() {
         </div>
       </div>
       
-      {/* 🟢 Load Fonts */}
+      {/* 🟢 Load Fonts & Toast Animation */}
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
       
       <style jsx global>{`
@@ -167,7 +183,12 @@ function UserJoinContent() {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes bounceIn { 
+          0% { opacity: 0; transform: translate(-50%, -20px); } 
+          100% { opacity: 1; transform: translate(-50%, 0); } 
+        }
         .animate-fade-up { animation: fadeUp 0.5s ease-out forwards; }
+        .animate-bounce-in { animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
       `}</style>
     </div>
   );

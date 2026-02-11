@@ -3,6 +3,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getSocket } from "@/lib/socket";
 
+const API_URL = "https://gdg-quiz.onrender.com/api";
+
 function LeaderboardContent() {
   const searchParams = useSearchParams();
   const socket = getSocket();
@@ -10,11 +12,26 @@ function LeaderboardContent() {
 
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sessionName, setSessionName] = useState(""); // NEW: State for session name
 
   useEffect(() => {
     if (!code) return;
 
-    // 1. Listen for updates
+    // 1. Fetch Session Name
+    const fetchSessionData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/sessions/code/${code}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+          setSessionName(json.data.title);
+        }
+      } catch (e) {
+        console.error("Failed to fetch session name", e);
+      }
+    };
+    fetchSessionData();
+
+    // 2. Listen for updates
     const onRanks = (data) => {
       // Sort by score descending
       const sorted = data.sort((a, b) => b.score - a.score);
@@ -29,7 +46,7 @@ function LeaderboardContent() {
     socket.on("game:ranks", onRanks);
     socket.on("game:over", onGameOver);
 
-    // 2. Join & Request Data Immediately (Fix for Refresh Issue)
+    // 3. Join & Request Data Immediately (Fix for Refresh Issue)
     socket.emit("join:session", code);
     socket.emit("sync:state", code); 
 
@@ -64,8 +81,8 @@ function LeaderboardContent() {
           <div className="logo-container">
              <img src="/assests/logo.png" alt="GDG Logo" className="logo-img" />
           </div>
-          <h1>Live Leaderboard</h1>
-          {code && <div className="session-badge">Session: {code}</div>}
+          <h1>{sessionName || "Live Leaderboard"}</h1>
+          {code && <div className="session-badge">Session Code: {code}</div>}
         </div>
 
         {/* LIST */}
@@ -134,6 +151,7 @@ function LeaderboardContent() {
           pointer-events: none;
         }
 
+        /* Optimized for 10 items without scrolling */
         .leaderboard-card {
           width: 800px;
           max-width: 95%;
@@ -146,47 +164,47 @@ function LeaderboardContent() {
           z-index: 1;
           display: flex;
           flex-direction: column;
-          max-height: 90vh;
+          max-height: 85vh; 
         }
 
         .header {
-          padding: 30px;
+          padding: 20px;
           text-align: center;
           border-bottom: 1px solid #f0f0f0;
           background: #fdfdfd;
           border-radius: 24px 24px 0 0;
         }
 
-        .logo-img { height: 60px; margin-bottom: 10px; }
+        .logo-img { height: 45px; margin-bottom: 5px; }
         
-        h1 { margin: 0; color: #202124; font-size: 2rem; font-weight: 800; }
+        h1 { margin: 0; color: #202124; font-size: 1.75rem; font-weight: 800; }
 
         .session-badge {
           display: inline-block;
-          margin-top: 10px;
+          margin-top: 8px;
           background: #e8f0fe;
           color: #1967d2;
-          padding: 6px 16px;
+          padding: 4px 12px;
           border-radius: 20px;
           font-weight: 600;
-          font-size: 0.9rem;
+          font-size: 0.8rem;
         }
 
         .list-container {
           flex: 1;
           overflow-y: auto;
-          padding: 20px 30px;
+          padding: 10px 20px;
           background: #fff;
         }
 
-        .list { display: flex; flex-direction: column; gap: 10px; }
+        .list { display: flex; flex-direction: column; gap: 6px; }
 
         .card {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 15px 20px;
-          border-radius: 16px;
+          padding: 10px 15px;
+          border-radius: 12px;
           background: #fff;
           border: 1px solid #f1f3f4;
           transition: transform 0.2s, box-shadow 0.2s;
@@ -199,50 +217,47 @@ function LeaderboardContent() {
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* MEDAL STYLES */
-        /* Gold */
         .rank-1 { 
           background: linear-gradient(135deg, #fff9c4 0%, #fff 100%);
           border: 2px solid #FFD700;
           box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
           transform: scale(1.02);
         }
-        .rank-1 .rank-badge { font-size: 1.8rem; }
+        .rank-1 .rank-badge { font-size: 1.5rem; }
 
-        /* Silver */
         .rank-2 { 
           background: linear-gradient(135deg, #f5f5f5 0%, #fff 100%);
           border: 2px solid #C0C0C0;
           box-shadow: 0 4px 15px rgba(192, 192, 192, 0.2);
         }
-        .rank-2 .rank-badge { font-size: 1.5rem; }
+        .rank-2 .rank-badge { font-size: 1.3rem; }
 
-        /* Bronze */
         .rank-3 { 
           background: linear-gradient(135deg, #ffe0b2 0%, #fff 100%);
           border: 2px solid #CD7F32;
           box-shadow: 0 4px 15px rgba(205, 127, 50, 0.15);
         }
-        .rank-3 .rank-badge { font-size: 1.5rem; }
+        .rank-3 .rank-badge { font-size: 1.3rem; }
 
-        .left { display: flex; align-items: center; gap: 15px; }
+        .left { display: flex; align-items: center; gap: 12px; }
 
         .rank-badge {
-          width: 40px; height: 40px;
+          width: 32px; height: 32px;
           display: flex; align-items: center; justify-content: center;
           font-weight: 800; font-size: 1rem; color: #5f6368;
         }
 
         .avatar-placeholder {
-          width: 40px; height: 40px;
+          width: 32px; height: 32px;
           border-radius: 50%;
           background: linear-gradient(135deg, #4285F4, #34A853);
           color: white;
           display: flex; align-items: center; justify-content: center;
-          font-weight: 700; font-size: 1.1rem;
+          font-weight: 700; font-size: 0.9rem;
         }
 
-        .name { font-size: 1.1rem; font-weight: 600; color: #333; }
-        .score { font-size: 1.2rem; font-weight: 800; color: #333; }
+        .name { font-size: 1rem; font-weight: 600; color: #333; }
+        .score { font-size: 1.1rem; font-weight: 800; color: #333; }
         .pts-label { font-size: 0.8rem; font-weight: 600; color: #888; margin-left: 2px; }
 
         .loading-state, .empty-state { text-align: center; padding: 40px; color: #888; font-weight: 500; }
@@ -258,13 +273,29 @@ function LeaderboardContent() {
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .footer {
-          padding: 15px;
+          padding: 12px;
           text-align: center;
           font-size: 0.8rem;
           color: #999;
           background: #fcfcfc;
           border-radius: 0 0 24px 24px;
           border-top: 1px solid #f0f0f0;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+          .leaderboard-card {
+            border-radius: 0;
+            max-height: 100vh;
+            height: 100vh;
+            border: none;
+            border-top: 6px solid #4285F4;
+          }
+          h1 { font-size: 1.5rem; }
+          .logo-img { height: 40px; }
+          .card { padding: 8px 12px; }
+          .rank-1 { transform: scale(1); }
+          .rank-1:hover { transform: scale(1); }
         }
       `}</style>
     </div>

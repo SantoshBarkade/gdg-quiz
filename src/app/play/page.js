@@ -402,7 +402,20 @@ export default function GamePlay() {
         .selected-answer::before { background: #4285F4; color: white; }
         @keyframes fadeIn { to { opacity: 1; } }
         @keyframes pulseZoom { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
-        @media (max-width: 600px) { .answers-grid, .stats-row { grid-template-columns: 1fr; } .quiz-card { padding: 20px; } }
+        
+        /* 🟢 Mobile optimization additions */
+        @media (max-width: 768px) {
+          .main-body { padding: 10px; align-items: flex-start; }
+          .container { padding-top: env(safe-area-inset-top, 10px); padding-bottom: env(safe-area-inset-bottom, 20px); }
+          .quiz-card { padding: 20px 15px; border-radius: 16px; }
+          .answers-grid { grid-template-columns: 1fr; gap: 12px; }
+          .answer-btn { width: 100%; min-height: 64px; padding: 15px; font-size: 1rem; text-align: left; }
+          .question-text { font-size: 1.25rem; margin-bottom: 20px; }
+          .progress-info { flex-wrap: wrap; gap: 10px; }
+          .stats-dashboard { grid-template-columns: 1fr; }
+          .winner-card { flex-direction: column; text-align: center; gap: 10px; }
+          .winner-name { text-align: center; }
+        }
       `}</style>
     </div>
   );

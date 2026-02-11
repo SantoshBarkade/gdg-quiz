@@ -5,6 +5,8 @@ import { Server } from "socket.io";
 import express from "express";
 import cors from "cors";
 import dns from "dns";
+import helmet from "helmet"; // 🔥 NEW: Security headers
+import rateLimit from "express-rate-limit"; // 🔥 NEW: Prevents API spam
 
 import Question from "./models/question.model.js";
 import Session from "./models/session.model.js";
@@ -19,8 +21,25 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
+
+// 🔥 PRODUCTION SECURITY: Helmet & CORS
+app.use(helmet()); 
+app.use(cors({ 
+  origin: process.env.CLIENT_URL || "*", // Restrict this in production
+  methods: ["GET", "POST", "PUT", "DELETE"], 
+  credentials: true 
+}));
 app.use(express.json());
+
+// 🔥 RATE LIMITING: Prevent abuse during live events
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // Limit each IP to 100 requests per `window`
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/", apiLimiter);
 
 app.get("/", (req, res) => res.send("GDG Quiz Backend is Running 🚀"));
 
@@ -97,21 +116,18 @@ io.on("connection", (socket) => {
       if (!session) return socket.emit("error", "Session not found");
       if (session.status === "WAITING") return socket.emit("sync:idle");
       
-      // 🟢 FIX: Single Event for Game Over (Prevent Race Condition)
-      if (session.status === "FINISHED") {
-        // 1. Get Top 3 Winners (Normalized Data)
+      if (session.status === "FINISHED" || session.status === "COMPLETED") {
         const winnersRaw = await Participant.find({ sessionId: code })
-          .sort({ totalScore: -1, createdAt: 1 }) // Tie-breaker: joined earlier
+          .sort({ totalScore: -1, createdAt: 1 }) 
           .limit(3)
           .lean();
           
         const winners = winnersRaw.map(w => ({
           name: w.name,
-          score: w.totalScore || 0, // Ensure score exists
+          score: w.totalScore || 0,
           participantNumber: w.participantNumber
         }));
 
-        // 2. Get All Players (For "Your Rank" calculation)
         const allPlayersRaw = await Participant.find({ sessionId: code })
           .sort({ totalScore: -1, createdAt: 1 })
           .select("name totalScore")
@@ -124,7 +140,6 @@ io.on("connection", (socket) => {
           score: p.totalScore || 0,
         }));
         
-        // 🟢 Send EVERYTHING in one packet
         socket.emit("game:over", { winners, leaderboard });
         return; 
       }
@@ -152,7 +167,6 @@ io.on("connection", (socket) => {
         }
       }
 
-      // Interim Leaderboard (Between Questions)
       const topPlayers = await Participant.find({ sessionId: code }).sort({ totalScore: -1 }).limit(10).select("name totalScore").lean();
       socket.emit("game:ranks", topPlayers.map((p, idx) => ({
         id: p._id.toString(),

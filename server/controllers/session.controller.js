@@ -8,7 +8,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // --- HELPER: THE AUTOMATIC GAME LOOP ---
 const runGameLoop = async (sessionCode, io) => {
-  console.log(`🚀 Starting Game Loop for ${sessionCode}`);
+  console.log(`🎮 Starting Game Loop for ${sessionCode}`);
 
   try {
     // 1. Fetch all questions
@@ -23,6 +23,14 @@ const runGameLoop = async (sessionCode, io) => {
 
     // 2. Loop through every question
     for (let i = 0; i < questions.length; i++) {
+      
+      // 🟢 Security Fix: Break loop if Admin clicked "Stop" mid-game
+      const checkSession = await Session.findOne({ sessionCode });
+      if (checkSession?.status !== "ACTIVE") {
+        console.log(`🛑 Loop aborted. Session ${sessionCode} is no longer ACTIVE.`);
+        break;
+      }
+
       const question = questions[i];
       const timeLimit = 15; 
 
@@ -76,18 +84,22 @@ const runGameLoop = async (sessionCode, io) => {
       await sleep(5000); 
     }
 
-    // 3. GAME OVER
-    console.log(`🏁 Game Over for ${sessionCode}`);
-    await Session.updateOne({ sessionCode }, { status: "FINISHED" });
+    // 3. GAME OVER (Only trigger if the game wasn't prematurely stopped)
+    const finalSessionCheck = await Session.findOne({ sessionCode });
+    if (finalSessionCheck?.status === "ACTIVE") {
+      console.log(`🏁 Game Over for ${sessionCode}`);
+      await Session.updateOne({ sessionCode }, { status: "FINISHED" });
 
-    const winners = await Participant.find({ sessionId: sessionCode })
-      .sort({ totalScore: -1 })
-      .limit(3)
-      .lean();
+      const winners = await Participant.find({ sessionId: sessionCode })
+        .sort({ totalScore: -1 })
+        .limit(3)
+        .lean();
 
-    io.to(sessionCode).emit("game:over", {
-      winners: winners.map((w) => ({ name: w.name, score: w.totalScore })),
-    });
+      io.to(sessionCode).emit("game:over", {
+        winners: winners.map((w) => ({ name: w.name, score: w.totalScore })),
+      });
+    }
+
   } catch (error) {
     console.error("Game Loop Error:", error);
   }
@@ -97,7 +109,6 @@ const runGameLoop = async (sessionCode, io) => {
    CONTROLLERS
 ========================================================= */
 
-// ... [createSession, getAllSessions, getSessionByCode, startGame - Keep Existing] ...
 export const createSession = async (req, res, next) => {
   try {
     const { title, description, sessionCode } = req.body;
@@ -140,12 +151,12 @@ export const startGame = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// 5. UPDATE STATUS (Manual Stop/Reset)
+// UPDATE STATUS (Manual Stop/Reset)
 export const updateSessionStatus = async (req, res, next) => {
   try {
     const { sessionId } = req.params;
     const { status } = req.body;
-    const io = req.app.get("io"); // 🟢 Fix: Get IO
+    const io = req.app.get("io");
 
     const session = await Session.findByIdAndUpdate(
       sessionId,
@@ -155,7 +166,7 @@ export const updateSessionStatus = async (req, res, next) => {
     if (!session)
       return res.status(404).json({ success: false, message: "Not found" });
 
-    // 🟢 FIX: Force redirect when Admin stops session
+    // FIX: Force redirect when Admin stops session
     if (status === "COMPLETED" || status === "FINISHED") {
       if (io) io.to(session.sessionCode).emit("game:force_stop");
     }
@@ -166,7 +177,6 @@ export const updateSessionStatus = async (req, res, next) => {
   }
 };
 
-// ... [deleteSession, resetSessionData, deleteSessionPermanently - Keep Existing] ...
 export const deleteSession = async (req, res, next) => {
   try {
     const { sessionId } = req.params;

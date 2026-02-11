@@ -74,7 +74,7 @@ export default function LobbyPage() {
             <p>You are in the lobby.</p>
           </div>
 
-          {/* 🟢 RESTORED: Big Counter Card */}
+          {/* 🟢 Big Counter Card */}
           <div className="count-card-wrapper">
             <div className="count-card">
               <div className="pulse-ring"></div>
@@ -194,10 +194,15 @@ export default function LobbyPage() {
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         @keyframes ripple { 0% { transform: scale(0.95); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
         
+        /* 🟢 Mobile Optimization */
         @media (max-width: 600px) {
-          .welcome-text h2 { font-size: 2rem; }
+          .lobby-container { padding: 15px; }
+          .lobby-header { flex-direction: column; gap: 15px; margin-bottom: 30px; }
+          .welcome-text h2 { font-size: 2.2rem; }
+          .welcome-text p { font-size: 1rem; }
           .count-card { width: 200px; height: 200px; }
-          .count-number { font-size: 4.5rem; }
+          .count-number { font-size: 4rem; }
+          .instruction-pill { font-size: 0.9rem; padding: 12px 20px; text-align: center; width: 100%; }
         }
       `}</style>
     </div>
