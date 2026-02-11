@@ -5,25 +5,6 @@ import Head from "next/head";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
-// 🟢 NEW: Custom SVG Logo Component designed for GDG Quiz
-const ProjectLogo = () => (
-  <svg width="42" height="42" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Red Top-Left */}
-    <path d="M20 4H12C7.58172 4 4 7.58172 4 12V20H20V4Z" fill="#EA4335"/>
-    {/* Blue Top-Right */}
-    <path d="M36 12C36 7.58172 32.4183 4 28 4H20V20H36V12Z" fill="#4285F4"/>
-    {/* Yellow Bottom-Left */}
-    <path d="M4 20V28C4 32.4183 7.58172 36 12 36H20V20H4Z" fill="#FBBC05"/>
-    {/* Green Bottom-Right (with Chat Tail) */}
-    <path d="M20 20H36V28C36 32.4183 32.4183 36 28 36H20V20Z" fill="#34A853"/>
-    <path d="M36 28L40 40L28 36H36V28Z" fill="#34A853"/>
-    {/* White Center Circle */}
-    <circle cx="20" cy="20" r="9" fill="white" />
-    {/* Blue Quiz Checkmark */}
-    <path d="M16 20.5L19 23.5L25 16" stroke="#4285F4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
 export default function GDGLandingPage() {
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
@@ -566,9 +547,13 @@ export default function GDGLandingPage() {
 
       <div className="app-container">
         <header className="navbar">
-          {/* 🟢 NEW: Integrated Custom Logo alongside text */}
+          {/* 🟢 CHANGED: Replaced Custom SVG with logo1.png */}
           <Link href="/" className="logo">
-            <ProjectLogo />
+            <img 
+              src="/assests/logo1.png" 
+              alt="GDG Logo" 
+              style={{ height: "45px", width: "auto" }} 
+            />
             <span className="logo-text">GDG SKNCOE</span>
           </Link>
           
@@ -740,9 +725,12 @@ export default function GDGLandingPage() {
           <div className="footer-container">
             <div className="footer-section footer-brand">
               <div className="footer-logo-container">
-                {/* Embedded custom SVG here as well for consistency */}
-                <ProjectLogo />
-                <div className="footer-logo-text" style={{ marginLeft: '10px' }}>
+                <img
+                  src="/assests/logo.png"
+                  alt="GDG Logo"
+                  className="footer-logo-img"
+                />
+                <div className="footer-logo-text">
                   <span className="on-campus">ON CAMPUS</span>
                   <span className="college-name">
                     Smt. Kashibai Navale College of Engineering
