@@ -3,12 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 import Link from "next/link";
-// 🟢 CHANGE 1: Import the icons library
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
 export default function GDGLandingPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [roomCode, setRoomCode] = useState("");
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
 
@@ -50,18 +47,11 @@ export default function GDGLandingPage() {
     return () => observer.disconnect();
   }, []);
 
-  const handleJoinSubmit = (e) => {
-    e.preventDefault();
-    alert(`Joining room: ${roomCode}`);
-    setIsModalOpen(false);
-  };
-
   return (
     <div className="light">
       <Head>
         <title>GDG SKNCOE</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {/* 🟢 CHANGE 2: Removed the broken FontAwesome Link */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;800&display=swap"
           rel="stylesheet"
@@ -117,11 +107,11 @@ export default function GDGLandingPage() {
         }
 
         .logo {
-          font-family: "Poppins";
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--google-blue);
+          display: flex;
+          align-items: center;
+          text-decoration: none;
         }
+        
         nav {
           display: flex;
           align-items: center;
@@ -186,6 +176,8 @@ export default function GDGLandingPage() {
           cursor: pointer;
           transition: 0.3s;
           box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
+          display: inline-block;
+          text-decoration: none;
         }
         .hero-btn:hover {
           transform: translateY(-4px);
@@ -382,33 +374,6 @@ export default function GDGLandingPage() {
           width: 200px;
         }
 
-        /* Modal */
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.6);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 3000;
-        }
-        .modal-content {
-          background: var(--bg-card);
-          padding: 2.5rem;
-          border-radius: 20px;
-          width: 90%;
-          max-width: 400px;
-        }
-        .modal-content input {
-          width: 100%;
-          padding: 1rem;
-          margin: 1rem 0;
-          border-radius: 8px;
-          border: 1px solid var(--border-color);
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-        }
-
         .footer {
           background-color: #4285f4;
           padding: 80px 5% 40px;
@@ -557,9 +522,6 @@ export default function GDGLandingPage() {
           .navbar {
             padding: 1rem 3%;
           }
-          .logo {
-            font-size: 1.2rem;
-          }
         }
         @media (max-width: 480px) {
           .main-heading {
@@ -574,13 +536,19 @@ export default function GDGLandingPage() {
 
       <div className="app-container">
         <header className="navbar">
-          <div className="logo">GDG SKNCOE</div>
+          <Link href="/" className="logo">
+            <img 
+              src="/assests/logo.png" 
+              alt="GDG Logo" 
+              style={{ height: "45px", width: "auto" }} 
+            />
+          </Link>
+          
           <nav>
             <div className="header-socials-wrapper">
               <div
                 className="social-links"
                 style={{ justifyContent: "center", gap: "15px" }}>
-                {/* 🟢 CHANGE 3: Used React Icons here */}
                 <a
                   href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
                   aria-label="Instagram">
@@ -621,9 +589,16 @@ export default function GDGLandingPage() {
                   experience unforgettable.
                 </span>
               </p>
-              <button className="hero-btn" onClick={() => setIsModalOpen(true)}>
+              
+              {/* 🟢 CHANGED: Replaced button with a direct external link */}
+              <a 
+                href="https://gdg.community.dev/gdg-on-campus-shrimati-kashibai-navale-college-of-engineering-pune-india/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="hero-btn"
+              >
                 Join Community
-              </button>
+              </a>
             </div>
 
             <div className="hero-right">
@@ -759,7 +734,6 @@ export default function GDGLandingPage() {
               </a>
             </div>
 
-            {/* 🟢 CHANGE 3: Used React Icons here too */}
             <div className="footer-section footer-socials-wrapper">
               <div className="social-links">
                 <a
