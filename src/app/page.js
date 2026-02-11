@@ -550,7 +550,7 @@ export default function GDGLandingPage() {
           {/* 🟢 CHANGED: Replaced Custom SVG with logo1.png */}
           <Link href="/" className="logo">
             <img 
-              src="/assests/logo1.png" 
+              src="/assests/logo1.jpeg" 
               alt="GDG Logo" 
               style={{ height: "45px", width: "auto" }} 
             />
@@ -726,7 +726,7 @@ export default function GDGLandingPage() {
             <div className="footer-section footer-brand">
               <div className="footer-logo-container">
                 <img
-                  src="/assests/logo.png"
+                  src="/assests/logo1.jpeg"
                   alt="GDG Logo"
                   className="footer-logo-img"
                 />
