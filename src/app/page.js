@@ -7,23 +7,12 @@ import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
 export default function GDGLandingPage() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
 
   const processRef = useRef(null);
-
-  // --- Theme Management ---
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") setIsDarkMode(true);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
 
   // --- Quiz Animation Loop ---
   useEffect(() => {
@@ -68,7 +57,7 @@ export default function GDGLandingPage() {
   };
 
   return (
-    <div className={isDarkMode ? "dark" : "light"}>
+    <div className="light">
       <Head>
         <title>GDG SKNCOE</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -93,17 +82,6 @@ export default function GDGLandingPage() {
           --google-green: #10b981;
           --google-yellow: #f59e0b;
           --navbar-bg: rgba(255, 255, 255, 0.95);
-        }
-
-        .dark {
-          --bg-primary: #0f172a;
-          --bg-secondary: #1e293b;
-          --bg-card: #1e293b;
-          --bg-grid: rgba(59, 130, 246, 0.08);
-          --text-primary: #f1f5f9;
-          --text-secondary: #cbd5e1;
-          --border-color: #334155;
-          --navbar-bg: rgba(15, 23, 42, 0.95);
         }
 
         * {
@@ -157,13 +135,6 @@ export default function GDGLandingPage() {
         }
         nav a:hover {
           color: var(--google-blue);
-        }
-
-        .theme-toggle {
-          background: none;
-          border: none;
-          cursor: pointer;
-          color: var(--text-primary);
         }
 
         .hero {
@@ -627,15 +598,9 @@ export default function GDGLandingPage() {
             </div>
             <Link
               href="/admin"
-              className="hidden md:block text-sm font-semibold text-gray-600 hover:text-blue-600 dark:text-gray-300">
+              className="hidden md:block text-sm font-semibold text-gray-600 hover:text-blue-600">
               Admin Portal
             </Link>
-
-            <button
-              className="theme-toggle"
-              onClick={() => setIsDarkMode(!isDarkMode)}>
-              {isDarkMode ? "☀️" : "🌙"}
-            </button>
           </nav>
         </header>
 

@@ -239,7 +239,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* GLOBAL STATS */}
+        {/* 🟢 DYNAMIC STATS: Toggles between Total Sessions and Total Questions */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
@@ -247,9 +247,10 @@ export default function Dashboard() {
             <div className="stat-label">Total Connections</div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon">📋</div>
-            <div className="stat-value">{sessions.length}</div>
-            <div className="stat-label">Total Sessions</div>
+            {/* Swaps icon, count, and label based on managerView state */}
+            <div className="stat-icon">{managerView ? "📝" : "📋"}</div>
+            <div className="stat-value">{managerView ? questions.length : sessions.length}</div>
+            <div className="stat-label">{managerView ? "Total Questions" : "Total Sessions"}</div>
           </div>
         </div>
 
@@ -261,12 +262,10 @@ export default function Dashboard() {
         ) : (
           <div>
             <div className="section-header">
-              {/* 🟢 CHANGED: Display Session Title instead of Session Code */}
               <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{sessions.find(s => s.sessionCode === currentSessionCode)?.title || currentSessionCode}</span></h2>
               <button className="btn-grey" onClick={closeManager}>Close</button>
             </div>
             
-            {/* 🟢 CHANGED: Add Question block now matches the Update Modal styling */}
             <div className="card">
               <h3>Add New Question</h3>
               <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1.1rem", padding: "12px", marginBottom: "20px" }} />
