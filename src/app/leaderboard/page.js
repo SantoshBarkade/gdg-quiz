@@ -12,7 +12,7 @@ function LeaderboardContent() {
 
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sessionName, setSessionName] = useState(""); // NEW: State for session name
+  const [sessionName, setSessionName] = useState(""); 
 
   useEffect(() => {
     if (!code) return;
@@ -46,7 +46,7 @@ function LeaderboardContent() {
     socket.on("game:ranks", onRanks);
     socket.on("game:over", onGameOver);
 
-    // 3. Join & Request Data Immediately (Fix for Refresh Issue)
+    // 3. Join & Request Data Immediately 
     socket.emit("join:session", code);
     socket.emit("sync:state", code); 
 
@@ -81,8 +81,8 @@ function LeaderboardContent() {
           <div className="logo-container">
              <img src="/assests/logo.png" alt="GDG Logo" className="logo-img" />
           </div>
+          {/* 🟢 CHANGED: Removed Session Code, displays only Title */}
           <h1>{sessionName || "Live Leaderboard"}</h1>
-          {code && <div className="session-badge">Session Code: {code}</div>}
         </div>
 
         {/* LIST */}
@@ -151,7 +151,6 @@ function LeaderboardContent() {
           pointer-events: none;
         }
 
-        /* Optimized for 10 items without scrolling */
         .leaderboard-card {
           width: 800px;
           max-width: 95%;
@@ -178,17 +177,6 @@ function LeaderboardContent() {
         .logo-img { height: 45px; margin-bottom: 5px; }
         
         h1 { margin: 0; color: #202124; font-size: 1.75rem; font-weight: 800; }
-
-        .session-badge {
-          display: inline-block;
-          margin-top: 8px;
-          background: #e8f0fe;
-          color: #1967d2;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-weight: 600;
-          font-size: 0.8rem;
-        }
 
         .list-container {
           flex: 1;

@@ -23,18 +23,13 @@ export default function Dashboard() {
   const [previewQ, setPreviewQ] = useState(null);
   const [updateQ, setUpdateQ] = useState(null);
   const [updateText, setUpdateText] = useState("");
-  const [updateOptions, setUpdateOptions] = useState([]); // NEW: State for update modal options
-  const [theme, setTheme] = useState("light");
+  const [updateOptions, setUpdateOptions] = useState([]); 
 
   useEffect(() => {
     const p = sessionStorage.getItem("ADMIN_PASSCODE");
     if (!p) return router.push("/admin");
     setPasscode(p);
     loadSessions(p);
-
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-    document.documentElement.setAttribute("data-theme", savedTheme);
 
     socket.on("admin:stats", (data) => {
       setStats({ 
@@ -45,13 +40,6 @@ export default function Dashboard() {
 
     return () => socket.off("admin:stats");
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-  };
 
   const loadSessions = async (token = passcode) => {
     try {
@@ -144,7 +132,6 @@ export default function Dashboard() {
     setOptions(newOpts);
   };
 
-  // NEW: Handler for update options
   const handleUpdateOptionChange = (index, field, value) => {
     const newOpts = [...updateOptions];
     if (field === "isCorrect") {
@@ -183,14 +170,12 @@ export default function Dashboard() {
     fetchQuestions(currentSessionCode);
   };
 
-  // NEW: Setup update modal state
   const openUpdateModal = (q) => { 
     setUpdateQ(q); 
     setUpdateText(q.questionText); 
     setUpdateOptions(JSON.parse(JSON.stringify(q.options))); 
   };
 
-  // NEW: Save updated question and options
   const confirmUpdate = async () => {
     if (!updateText || !updateQ) return;
     if (!updateOptions.some((o) => o.isCorrect)) return alert("Select at least one correct answer");
@@ -248,14 +233,13 @@ export default function Dashboard() {
         <div className="top-navbar">
           <div className="page-title">Dashboard Overview</div>
           <div className="navbar-actions">
-            <button className="leaderboard-link" onClick={() => currentSessionCode ? window.open(`/leaderboard?code=${currentSessionCode}`) : alert("Select a session first")} style={{ marginRight: "10px" }}>
+            <button className="leaderboard-link" onClick={() => currentSessionCode ? window.open(`/leaderboard?code=${currentSessionCode}`) : alert("Select a session first")}>
               <span className="leaderboard-icon">🏆</span><span>Leaderboard</span>
             </button>
-            <button className="theme-toggle" onClick={toggleTheme}>{theme === "light" ? "🌙" : "☀️"}</button>
           </div>
         </div>
 
-        {/* 🟢 GLOBAL STATS */}
+        {/* GLOBAL STATS */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon">🌐</div>
@@ -277,16 +261,52 @@ export default function Dashboard() {
         ) : (
           <div>
             <div className="section-header">
-              <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{currentSessionCode}</span></h2>
+              {/* 🟢 CHANGED: Display Session Title instead of Session Code */}
+              <h2 style={{ margin: 0 }}>Managing: <span className="code-badge">{sessions.find(s => s.sessionCode === currentSessionCode)?.title || currentSessionCode}</span></h2>
               <button className="btn-grey" onClick={closeManager}>Close</button>
             </div>
+            
+            {/* 🟢 CHANGED: Add Question block now matches the Update Modal styling */}
             <div className="card">
               <h3>Add New Question</h3>
-              <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1rem", padding: "16px" }} />
-              <div>{options.map((opt, idx) => (<div key={idx} className="option-row"><input type="radio" name="correct" checked={opt.isCorrect} onChange={() => handleOptionChange(idx, "isCorrect", true)} /><input className="opt-text" placeholder="Option text..." value={opt.text} onChange={(e) => handleOptionChange(idx, "text", e.target.value)} />{options.length > 2 && <button className="btn-red" onClick={() => setOptions(options.filter((_, i) => i !== idx))}>✕</button>}</div>))}</div>
-              <button className="btn-grey" style={{ marginTop: "10px" }} onClick={() => setOptions([...options, { text: "", isCorrect: false }])}>+ Add Option</button>
-              <div style={{ marginTop: "24px" }}><button className="btn-blue" onClick={saveQuestion}>Save Question</button></div>
+              <input value={qText} onChange={(e) => setQText(e.target.value)} placeholder="Enter question..." style={{ fontSize: "1.1rem", padding: "12px", marginBottom: "20px" }} />
+              
+              <div style={{ marginBottom: "20px" }}>
+                {options.map((opt, idx) => (
+                  <div key={idx} className="option-row" style={{ display: "flex", gap: "10px", marginBottom: "10px", alignItems: "center" }}>
+                    <input 
+                      type="radio" 
+                      name="newCorrect" 
+                      checked={opt.isCorrect} 
+                      onChange={() => handleOptionChange(idx, "isCorrect", true)} 
+                      style={{ width: "20px", height: "20px", cursor: "pointer", margin: 0 }}
+                    />
+                    <input 
+                      className="opt-text" 
+                      placeholder="Option text..." 
+                      value={opt.text} 
+                      onChange={(e) => handleOptionChange(idx, "text", e.target.value)} 
+                      style={{ flex: 1, marginBottom: 0 }}
+                    />
+                    {options.length > 2 && (
+                      <button className="btn-red" onClick={() => setOptions(options.filter((_, i) => i !== idx))}>✕</button>
+                    )}
+                  </div>
+                ))}
+                <button 
+                  className="btn-grey" 
+                  style={{ marginTop: "10px" }} 
+                  onClick={() => setOptions([...options, { text: "", isCorrect: false }])}
+                >
+                  + Add Option
+                </button>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="btn-blue" onClick={saveQuestion}>Save Question</button>
+              </div>
             </div>
+
             <h3 style={{ margin: "32px 0 16px 0" }}>Existing Questions</h3>
             <div>{questions.map((q, index) => (<div key={q._id} className="question-box"><div className="q-header"><div style={{ display: "flex", alignItems: "center", flex: 1 }}><span className="question-number">{index + 1}</span><strong>{q.questionText}</strong></div><div style={{ display: "flex", gap: "12px", alignItems: "center" }}><div className="reorder-controls"><button className="reorder-btn" disabled={index === 0} onClick={() => moveQuestion(q._id, "up")}>▲</button><button className="reorder-btn" disabled={index === questions.length - 1} onClick={() => moveQuestion(q._id, "down")}>▼</button></div><div className="q-actions"><button className="btn-outline" onClick={() => setPreviewQ(q)}>Preview</button><button className="btn-blue" onClick={() => openUpdateModal(q)}>Update</button><button className="btn-red" onClick={() => deleteQuestion(q._id)}>Delete</button></div></div></div></div>))}</div>
           </div>
@@ -296,7 +316,6 @@ export default function Dashboard() {
       {/* Modals & CSS */}
       {previewQ && (<div className="modal show" onClick={(e) => e.target.className.includes("modal") && setPreviewQ(null)}><div className="modal-content"><span className="close" onClick={() => setPreviewQ(null)}>✕</span><h2>Preview</h2><p>{previewQ.questionText}</p></div></div>)}
       
-      {/* NEW: Expanded Update Modal */}
       {updateQ && (
         <div className="modal show" onClick={(e) => e.target.className.includes("modal") && setUpdateQ(null)}>
           <div className="modal-content" style={{ maxWidth: "700px" }}>
@@ -353,7 +372,6 @@ export default function Dashboard() {
         /* ... existing styles ... */
         @import url("https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap");
         :root { --google-blue: #4285f4; --google-red: #ea4335; --google-yellow: #fbbc05; --google-green: #34a853; --white: #ffffff; --bg-light: #f8f9fa; --text-primary: #202124; --text-secondary: #5f6368; --border-light: #dadce0; --shadow-sm: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15); }
-        [data-theme="dark"] { --white: #1f1f1f; --bg-light: #121212; --text-primary: #e8eaed; --text-secondary: #9aa0a6; --border-light: #3c4043; }
         body { margin: 0; font-family: "Roboto", sans-serif; background: var(--bg-light); color: var(--text-primary); }
         .layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
         .sidebar { background: var(--white); padding: 24px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; border-right: 1px solid var(--border-light); }
@@ -364,7 +382,6 @@ export default function Dashboard() {
         .page-title { font-family: "Google Sans", sans-serif; font-size: 1.75rem; font-weight: 700; color: var(--text-primary); }
         .navbar-actions { display: flex; align-items: center; gap: 12px; }
         .leaderboard-link { display: flex; align-items: center; gap: 8px; padding: 10px 20px; background: linear-gradient(135deg, var(--google-blue), var(--google-green)); color: white; text-decoration: none; border-radius: 12px; font-family: "Google Sans", sans-serif; font-weight: 600; font-size: 0.875rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .theme-toggle { background: var(--bg-light); border: 2px solid var(--border-light); cursor: pointer; padding: 10px; display: flex; align-items: center; justify-content: center; border-radius: 12px; width: 44px; height: 44px; }
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 32px; }
         .stat-card { background: var(--white); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
         .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--google-blue); }
