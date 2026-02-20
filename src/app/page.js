@@ -5,9 +5,9 @@ import Head from "next/head";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
-// --- Custom Inline Logo Component ---
-// A clean, vector-based GDG logo that works on any background.
-const GDGLogo = ({ size = 40, className = "" }) => (
+// --- Custom "Quiz Spark" Logo Component ---
+// A unique, modern geometric spark representing ideas, knowledge, and tech.
+const QuizSparkLogo = ({ size = 48, className = "" }) => (
   <svg
     width={size}
     height={size}
@@ -15,22 +15,18 @@ const GDGLogo = ({ size = 40, className = "" }) => (
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <path
-      fill="#4285F4"
-      d="M386 400c45-42 65-112 53-179H260v74h105c-4 24-16 46-33 61z"
-    />
-    <path
-      fill="#34A853"
-      d="M260 504c82 0 151-27 202-74l-71-56c-26 16-59 26-97 26-83 0-153-53-179-126l-73 54c33 65 103 108 181 108z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M81 274c-4-23-4-47 0-70l-73-54C-11 188-11 322 8 360z"
-    />
-    <path
-      fill="#EA4335"
-      d="M260 104c44 0 83 15 113 38l61-61C383 34 322 8 260 8 182 8 112 51 79 116l73 54c25-72 95-125 178-125z"
-    />
+    <g transform="rotate(45 256 256)">
+      {/* Top Red Node */}
+      <rect x="216" y="40" width="80" height="160" rx="40" fill="#EA4335" />
+      {/* Right Blue Node */}
+      <rect x="312" y="216" width="160" height="80" rx="40" fill="#4285F4" />
+      {/* Bottom Green Node */}
+      <rect x="216" y="312" width="80" height="160" rx="40" fill="#34A853" />
+      {/* Left Yellow Node */}
+      <rect x="40" y="216" width="160" height="80" rx="40" fill="#FBBC05" />
+      {/* Center Target Dot */}
+      <circle cx="256" cy="256" r="24" fill="#202124" opacity="0.8" />
+    </g>
   </svg>
 );
 
@@ -69,7 +65,7 @@ export default function GDGLandingPage() {
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.2 }
     );
 
     if (processRef.current) observer.observe(processRef.current);
@@ -113,8 +109,11 @@ export default function GDGLandingPage() {
           font-family: "Inter", sans-serif;
           background-color: var(--bg-primary);
           color: var(--text-primary);
-          background-image:
-            linear-gradient(to right, var(--bg-grid) 1px, transparent 1px),
+          background-image: linear-gradient(
+              to right,
+              var(--bg-grid) 1px,
+              transparent 1px
+            ),
             linear-gradient(to bottom, var(--bg-grid) 1px, transparent 1px);
           background-size: 40px 40px;
           transition: background-color 0.3s ease;
@@ -126,7 +125,7 @@ export default function GDGLandingPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1rem 5%;
+          padding: 1.2rem 5%;
           background: var(--navbar-bg);
           backdrop-filter: blur(10px);
           position: fixed;
@@ -140,14 +139,14 @@ export default function GDGLandingPage() {
           display: flex;
           align-items: center;
           text-decoration: none;
-          gap: 12px;
+          gap: 16px;
           transition: transform 0.2s ease;
         }
 
         .logo-container:hover {
           transform: translateY(-2px);
         }
-        
+
         .logo-text {
           font-family: "Poppins", sans-serif;
           font-size: 1.4rem;
@@ -160,31 +159,47 @@ export default function GDGLandingPage() {
         }
 
         .logo-subtext {
-          font-size: 0.7rem;
+          font-size: 0.75rem;
           font-weight: 600;
           color: var(--text-secondary);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
-        nav {
+        .nav-right-section {
           display: flex;
           align-items: center;
-          gap: 2rem;
-        }
-        
-        .header-socials-wrapper {
-          display: flex;
-          gap: 15px;
+          gap: 2.5rem;
         }
 
-        nav a {
+        .header-socials-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+
+        .header-social-icon {
+          color: #4b5563;
+          transition: color 0.3s ease, transform 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .header-social-icon:hover {
+          color: var(--google-blue);
+          transform: translateY(-2px);
+        }
+
+        .admin-link {
           text-decoration: none;
-          color: var(--text-primary);
+          color: #4b5563;
           font-weight: 600;
+          font-size: 0.95rem;
           transition: color 0.3s;
         }
-        nav a:hover {
+        
+        .admin-link:hover {
           color: var(--google-blue);
         }
 
@@ -204,9 +219,15 @@ export default function GDGLandingPage() {
           line-height: 1.1;
           margin-bottom: 1.5rem;
         }
-        .text-blue { color: var(--google-blue); }
-        .text-green { color: var(--google-green); }
-        .text-red { color: var(--google-red); }
+        .text-blue {
+          color: var(--google-blue);
+        }
+        .text-green {
+          color: var(--google-green);
+        }
+        .text-red {
+          color: var(--google-red);
+        }
 
         .hero-description {
           font-size: 1.15rem;
@@ -254,8 +275,13 @@ export default function GDGLandingPage() {
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-20px);
+          }
         }
 
         .phone-screen {
@@ -347,7 +373,8 @@ export default function GDGLandingPage() {
           }
           100% {
             opacity: 0;
-            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r));
+            transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y)))
+              rotate(var(--r));
           }
         }
 
@@ -363,8 +390,13 @@ export default function GDGLandingPage() {
         }
 
         @keyframes trophy-bounce {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
+          0%,
+          100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
         }
 
         /* --- Process Timeline Styles --- */
@@ -445,14 +477,14 @@ export default function GDGLandingPage() {
           align-items: center;
           gap: 3rem;
         }
-        
+
         .footer-logo-box {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 24px;
           background: #ffffff;
-          padding: 20px 30px;
-          border-radius: 16px;
+          padding: 24px 32px;
+          border-radius: 20px;
           width: fit-content;
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
@@ -462,24 +494,24 @@ export default function GDGLandingPage() {
           flex-direction: column;
           color: #202124;
           text-align: left;
+          justify-content: center;
         }
 
         .footer-on-campus {
           font-weight: 800;
-          font-size: 1.2rem;
+          font-size: 1.25rem;
           letter-spacing: 0.5px;
           color: #3c4043;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
-        
+
         .footer-college-name {
           font-family: "Inter", sans-serif;
           font-size: 0.9rem;
           font-weight: 600;
           color: #5f6368;
           line-height: 1.4;
-          /* Fixed the squishing text issue here */
-          min-width: 250px; 
+          min-width: 250px;
           max-width: 300px;
         }
 
@@ -509,12 +541,12 @@ export default function GDGLandingPage() {
           transform: translateY(-2px);
         }
 
-        .social-links {
+        .footer-social-links {
           display: flex;
           gap: 15px;
           justify-content: flex-end;
         }
-        .social-links a {
+        .footer-social-links a {
           width: 45px;
           height: 45px;
           background: rgba(255, 255, 255, 0.15);
@@ -526,7 +558,7 @@ export default function GDGLandingPage() {
           font-size: 1.2rem;
           transition: all 0.3s ease;
         }
-        .social-links a:hover {
+        .footer-social-links a:hover {
           transform: translateY(-5px);
           background: white;
           color: #4285f4;
@@ -546,13 +578,15 @@ export default function GDGLandingPage() {
             display: flex;
             flex-direction: column;
           }
-          .main-heading { font-size: 3.5rem; }
+          .main-heading {
+            font-size: 3.5rem;
+          }
           .quiz-phone-mockup {
             width: 280px;
             height: 520px;
           }
         }
-        
+
         @media (max-width: 850px) {
           .timeline {
             flex-direction: column;
@@ -571,17 +605,21 @@ export default function GDGLandingPage() {
             height: ${(visibleSteps / 4) * 100}%;
           }
         }
-        
+
         @media (max-width: 768px) {
+          .nav-right-section {
+            gap: 1.5rem;
+          }
           .footer-container {
             grid-template-columns: 1fr;
             text-align: center;
-            gap: 2.5rem;
+            gap: 3rem;
           }
           .footer-logo-box {
             margin: 0 auto;
             flex-direction: column;
             text-align: center;
+            padding: 24px;
           }
           .footer-text-group {
             text-align: center;
@@ -589,7 +627,7 @@ export default function GDGLandingPage() {
           .footer-college-name {
             min-width: auto;
           }
-          .social-links {
+          .footer-social-links {
             justify-content: center;
           }
           .footer {
@@ -597,43 +635,66 @@ export default function GDGLandingPage() {
             border-top-right-radius: 40px;
             padding: 60px 5% 30px;
           }
-          .navbar { padding: 1rem 4%; }
+          .navbar {
+            padding: 1rem 4%;
+          }
         }
-        
+
         @media (max-width: 480px) {
-          .main-heading { font-size: 2.5rem; }
+          .main-heading {
+            font-size: 2.5rem;
+          }
           .hero-btn {
             width: 100%;
             padding: 1rem;
             text-align: center;
           }
-          .logo-text span { display: none; } /* Optional: hides long text on very small screens */
+          .logo-text span {
+            display: none;
+          }
+          .header-socials-wrapper {
+            display: none; /* Only hide on very tiny screens to save space for Admin button */
+          }
         }
       `}</style>
 
       <div className="app-container">
         <header className="navbar">
           <Link href="/" className="logo-container">
-            <GDGLogo size={40} />
+            <QuizSparkLogo size={42} />
             <div className="logo-text">
               GDG SKNCOE
               <span className="logo-subtext">On Campus</span>
             </div>
           </Link>
-          
-          <nav>
-            <div className="header-socials-wrapper hidden md:flex">
-              <a href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag==" aria-label="Instagram">
-                <FaInstagram size={22} className="text-gray-700 hover:text-blue-600 transition-colors" />
+
+          <nav className="nav-right-section">
+            {/* Added custom CSS classes to ensure these always display correctly */}
+            <div className="header-socials-wrapper">
+              <a
+                href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
+                aria-label="Instagram"
+                className="header-social-icon"
+              >
+                <FaInstagram size={22} />
               </a>
-              <a href="https://www.linkedin.com/company/gdgoncampus/" aria-label="LinkedIn">
-                <FaLinkedin size={22} className="text-gray-700 hover:text-blue-600 transition-colors" />
+              <a
+                href="https://www.linkedin.com/company/gdgoncampus/"
+                aria-label="LinkedIn"
+                className="header-social-icon"
+              >
+                <FaLinkedin size={22} />
+              </a>
+              <a 
+                href="#" 
+                aria-label="GitHub" 
+                className="header-social-icon"
+              >
+                <FaGithub size={22} />
               </a>
             </div>
-            <Link
-              href="/admin"
-              className="text-sm font-semibold text-gray-700 hover:text-blue-600"
-              style={{ textDecoration: "none" }}>
+            
+            <Link href="/admin" className="admin-link">
               Admin Portal
             </Link>
           </nav>
@@ -655,11 +716,11 @@ export default function GDGLandingPage() {
                   experience unforgettable.
                 </span>
               </p>
-              
-              <a 
-                href="https://gdg.community.dev/gdg-on-campus-shrimati-kashibai-navale-college-of-engineering-pune-india/" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+
+              <a
+                href="https://gdg.community.dev/gdg-on-campus-shrimati-kashibai-navale-college-of-engineering-pune-india/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hero-btn"
               >
                 Join Community
@@ -670,29 +731,53 @@ export default function GDGLandingPage() {
               <div className="quiz-phone-mockup">
                 <div className="phone-screen">
                   <div className="quiz-header">
-                    <div className={`score-badge ${quizState >= 3 ? "show" : ""}`}>
+                    <div
+                      className={`score-badge ${quizState >= 3 ? "show" : ""}`}
+                    >
                       🎯 Score: 100
                     </div>
-                    <div style={{ fontSize: "0.8rem", opacity: 0.8, fontFamily: "Inter" }}>
+                    <div
+                      style={{
+                        fontSize: "0.8rem",
+                        opacity: 0.8,
+                        fontFamily: "Inter",
+                      }}
+                    >
                       Question 1 of 5
                     </div>
-                    <div style={{ fontWeight: 700, marginTop: "10px", fontFamily: "Inter" }}>
+                    <div
+                      style={{
+                        fontWeight: 700,
+                        marginTop: "10px",
+                        fontFamily: "Inter",
+                      }}
+                    >
                       What does GDG stand for?
                     </div>
                   </div>
                   <div style={{ padding: "20px 0", fontFamily: "Inter" }}>
-                    {["Google Developer Group", "Global Design Guild", "Game Dev Group", "General Data Gateway"].map((opt, i) => (
+                    {[
+                      "Google Developer Group",
+                      "Global Design Guild",
+                      "Game Dev Group",
+                      "General Data Gateway",
+                    ].map((opt, i) => (
                       <div
                         key={opt}
                         className={`quiz-option 
                           ${i === 0 && quizState === 1 ? "selected" : ""} 
                           ${i === 0 && quizState >= 2 ? "correct" : ""}
-                        `}>
+                        `}
+                      >
                         {String.fromCharCode(65 + i)}. {opt}
                       </div>
                     ))}
                   </div>
-                  <div className={`celebration-overlay ${quizState === 4 ? "active" : ""}`}>
+                  <div
+                    className={`celebration-overlay ${
+                      quizState === 4 ? "active" : ""
+                    }`}
+                  >
                     <span className="trophy">🏆</span>
                     {[...Array(12)].map((_, i) => (
                       <div
@@ -702,7 +787,12 @@ export default function GDGLandingPage() {
                           "--x": `${(Math.random() - 0.5) * 200}px`,
                           "--y": `${(Math.random() - 0.5) * 200}px`,
                           "--r": `${Math.random() * 360}deg`,
-                          backgroundColor: ["#4285F4", "#EA4335", "#FBBC05", "#34A853"][i % 4],
+                          backgroundColor: [
+                            "#4285F4",
+                            "#EA4335",
+                            "#FBBC05",
+                            "#34A853",
+                          ][i % 4],
                         }}
                       />
                     ))}
@@ -713,29 +803,71 @@ export default function GDGLandingPage() {
           </section>
 
           <section className="process-section-wrapper" ref={processRef}>
-            <h2 style={{ fontSize: "2.5rem", marginBottom: "2rem", fontFamily: "Poppins" }}>
+            <h2
+              style={{
+                fontSize: "2.5rem",
+                marginBottom: "2rem",
+                fontFamily: "Poppins",
+              }}
+            >
               How it Works
             </h2>
             <div className="timeline">
               <div className="timeline-line">
-                <div className="timeline-progress" style={{ width: `${(visibleSteps / 4) * 100}%` }}></div>
+                <div
+                  className="timeline-progress"
+                  style={{ width: `${(visibleSteps / 4) * 100}%` }}
+                ></div>
               </div>
 
-              {["Join Event", "Think & Answer", "Compete", "Win Rewards"].map((step, i) => (
-                <div key={step} className={`timeline-item ${visibleSteps > i ? "visible" : ""}`}>
-                  <div className={`timeline-node ${visibleSteps > i ? "active-node" : ""}`}></div>
-                  <div className="process-card">
-                    <div style={{ color: "var(--google-blue)", fontWeight: 800, fontFamily: "Poppins", fontSize: "1.2rem", marginBottom: "0.5rem" }}>
-                      0{i + 1}
+              {["Join Event", "Think & Answer", "Compete", "Win Rewards"].map(
+                (step, i) => (
+                  <div
+                    key={step}
+                    className={`timeline-item ${
+                      visibleSteps > i ? "visible" : ""
+                    }`}
+                  >
+                    <div
+                      className={`timeline-node ${
+                        visibleSteps > i ? "active-node" : ""
+                      }`}
+                    ></div>
+                    <div className="process-card">
+                      <div
+                        style={{
+                          color: "var(--google-blue)",
+                          fontWeight: 800,
+                          fontFamily: "Poppins",
+                          fontSize: "1.2rem",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        0{i + 1}
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: "1.1rem",
+                          color: "var(--text-primary)",
+                        }}
+                      >
+                        {step}
+                      </h3>
                     </div>
-                    <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)" }}>{step}</h3>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
 
             <Link href="/user" style={{ textDecoration: "none" }}>
-              <button className="hero-btn" style={{ marginTop: "4rem", padding: "1.2rem 3rem", fontSize: "1.1rem" }}>
+              <button
+                className="hero-btn"
+                style={{
+                  marginTop: "4rem",
+                  padding: "1.2rem 3rem",
+                  fontSize: "1.1rem",
+                }}
+              >
                 Join Room Now
               </button>
             </Link>
@@ -746,7 +878,7 @@ export default function GDGLandingPage() {
           <div className="footer-container">
             <div className="footer-section footer-brand">
               <div className="footer-logo-box">
-                <GDGLogo size={50} />
+                <QuizSparkLogo size={56} />
                 <div className="footer-text-group">
                   <span className="footer-on-campus">ON CAMPUS</span>
                   <span className="footer-college-name">
@@ -763,12 +895,18 @@ export default function GDGLandingPage() {
               </a>
             </div>
 
-            <div className="footer-section footer-socials-wrapper">
-              <div className="social-links">
-                <a href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag==" aria-label="Instagram">
+            <div className="footer-section">
+              <div className="footer-social-links">
+                <a
+                  href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
+                  aria-label="Instagram"
+                >
                   <FaInstagram size={20} />
                 </a>
-                <a href="https://www.linkedin.com/company/gdgoncampus/" aria-label="LinkedIn">
+                <a
+                  href="https://www.linkedin.com/company/gdgoncampus/"
+                  aria-label="LinkedIn"
+                >
                   <FaLinkedin size={20} />
                 </a>
                 <a href="#" aria-label="GitHub">
