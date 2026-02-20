@@ -6,13 +6,31 @@ import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
 // --- Custom Inline Logo Component ---
-// This completely replaces the need for the .jpeg and fixes all background issues.
-const GDGLogo = ({ size = 40 }) => (
-  <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#4285F4" d="M386 400c45-42 65-112 53-179H260v74h105c-4 24-16 46-33 61z"/>
-    <path fill="#34A853" d="M260 504c82 0 151-27 202-74l-71-56c-26 16-59 26-97 26-83 0-153-53-179-126l-73 54c33 65 103 108 181 108z"/>
-    <path fill="#FBBC05" d="M81 274c-4-23-4-47 0-70l-73-54C-11 188-11 322 8 360z"/>
-    <path fill="#EA4335" d="M260 104c44 0 83 15 113 38l61-61C383 34 322 8 260 8 182 8 112 51 79 116l73 54c25-72 95-125 178-125z"/>
+// A clean, vector-based GDG logo that works on any background.
+const GDGLogo = ({ size = 40, className = "" }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 512 512"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      fill="#4285F4"
+      d="M386 400c45-42 65-112 53-179H260v74h105c-4 24-16 46-33 61z"
+    />
+    <path
+      fill="#34A853"
+      d="M260 504c82 0 151-27 202-74l-71-56c-26 16-59 26-97 26-83 0-153-53-179-126l-73 54c33 65 103 108 181 108z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M81 274c-4-23-4-47 0-70l-73-54C-11 188-11 322 8 360z"
+    />
+    <path
+      fill="#EA4335"
+      d="M260 104c44 0 83 15 113 38l61-61C383 34 322 8 260 8 182 8 112 51 79 116l73 54c25-72 95-125 178-125z"
+    />
   </svg>
 );
 
