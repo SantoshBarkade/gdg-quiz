@@ -111,28 +111,20 @@ export default function GDGLandingPage() {
           display: flex;
           align-items: center;
           text-decoration: none;
-          gap: 12px;
           transition: transform 0.2s ease;
         }
 
         .logo:hover {
-          transform: translateY(-1px);
+          transform: translateY(-2px);
         }
 
+        /* Makes the dark JPEG look like a premium badge */
         .navbar-logo-img {
-          height: 40px;
+          height: 48px;
           width: auto;
           object-fit: contain;
-          /* Magic trick: makes the white background of the JPEG transparent against light backgrounds */
-          mix-blend-mode: multiply; 
-        }
-        
-        .logo-text {
-          font-family: "Poppins", sans-serif;
-          font-size: 1.4rem;
-          font-weight: 800;
-          color: #202124;
-          letter-spacing: -0.5px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         nav {
@@ -410,42 +402,20 @@ export default function GDGLandingPage() {
         .footer-logo-container {
           display: flex;
           align-items: center;
-          gap: 15px;
-          /* Changed to a solid white card so the JPEG fits perfectly without ugly filters */
-          background: #ffffff;
-          padding: 16px 24px;
-          border-radius: 16px;
+          justify-content: center;
+          /* Magic trick 2: Match the background of the JPEG so it blends invisibly */
+          background: #000000; 
+          padding: 12px;
+          border-radius: 12px;
           width: fit-content;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         }
 
         .footer-logo-img {
-          height: 45px;
+          height: 55px;
           width: auto;
           object-fit: contain;
-          /* Removed the invert filter so the original logo colors pop against the white card */
-        }
-
-        .footer-logo-text {
-          display: flex;
-          flex-direction: column;
-          color: #202124; /* Dark text to contrast with the white container */
-        }
-
-        .on-campus {
-          font-weight: 800;
-          font-size: 1.1rem;
-          letter-spacing: 0.5px;
-          color: #4b5563;
-        }
-        .college-name {
-          font-family: "Inter", sans-serif;
-          font-size: 0.85rem;
-          font-weight: 600;
-          max-width: 220px;
-          color: #1f2937;
-          line-height: 1.3;
-          margin-top: 2px;
+          border-radius: 4px; /* subtle inner radius */
         }
 
         .footer-center {
@@ -460,7 +430,7 @@ export default function GDGLandingPage() {
         .email-pill {
           background: rgba(255, 255, 255, 0.15);
           padding: 12px 24px;
-          border-radius: 50px; /* Made it more pill-like */
+          border-radius: 50px;
           color: white;
           text-decoration: none;
           display: inline-flex;
@@ -545,8 +515,6 @@ export default function GDGLandingPage() {
           }
           .footer-logo-container {
             margin: 0 auto;
-            flex-direction: column;
-            text-align: center;
           }
           .social-links {
             justify-content: center;
@@ -557,7 +525,6 @@ export default function GDGLandingPage() {
             padding: 60px 5% 30px;
           }
           .navbar { padding: 1rem 4%; }
-          .logo-text { font-size: 1.2rem; }
         }
         
         @media (max-width: 480px) {
@@ -572,13 +539,13 @@ export default function GDGLandingPage() {
 
       <div className="app-container">
         <header className="navbar">
+          {/* Changed: Removed the redundant "GDG SKNCOE" text because your logo banner already says it! */}
           <Link href="/" className="logo">
             <img 
               src="/assests/logo1.jpeg" 
-              alt="GDG Logo" 
+              alt="GDG Logo Banner" 
               className="navbar-logo-img"
             />
-            <span className="logo-text">GDG SKNCOE</span>
           </Link>
           
           <nav>
@@ -745,18 +712,13 @@ export default function GDGLandingPage() {
         <footer className="footer">
           <div className="footer-container">
             <div className="footer-section footer-brand">
+              {/* Changed: Removed redundant HTML text and changed container to black */}
               <div className="footer-logo-container">
                 <img
                   src="/assests/logo1.jpeg"
-                  alt="GDG Logo"
+                  alt="GDG Logo Banner"
                   className="footer-logo-img"
                 />
-                <div className="footer-logo-text">
-                  <span className="on-campus">ON CAMPUS</span>
-                  <span className="college-name">
-                    Smt. Kashibai Navale College of Engineering
-                  </span>
-                </div>
               </div>
             </div>
 
