@@ -5,6 +5,17 @@ import Head from "next/head";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
+// --- Custom Inline Logo Component ---
+// This completely replaces the need for the .jpeg and fixes all background issues.
+const GDGLogo = ({ size = 40 }) => (
+  <svg width={size} height={size} viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <path fill="#4285F4" d="M386 400c45-42 65-112 53-179H260v74h105c-4 24-16 46-33 61z"/>
+    <path fill="#34A853" d="M260 504c82 0 151-27 202-74l-71-56c-26 16-59 26-97 26-83 0-153-53-179-126l-73 54c33 65 103 108 181 108z"/>
+    <path fill="#FBBC05" d="M81 274c-4-23-4-47 0-70l-73-54C-11 188-11 322 8 360z"/>
+    <path fill="#EA4335" d="M260 104c44 0 83 15 113 38l61-61C383 34 322 8 260 8 182 8 112 51 79 116l73 54c25-72 95-125 178-125z"/>
+  </svg>
+);
+
 export default function GDGLandingPage() {
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
@@ -107,24 +118,35 @@ export default function GDGLandingPage() {
           box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
         }
 
-        .logo {
+        .logo-container {
           display: flex;
           align-items: center;
           text-decoration: none;
+          gap: 12px;
           transition: transform 0.2s ease;
         }
 
-        .logo:hover {
+        .logo-container:hover {
           transform: translateY(-2px);
         }
+        
+        .logo-text {
+          font-family: "Poppins", sans-serif;
+          font-size: 1.4rem;
+          font-weight: 800;
+          color: #202124;
+          letter-spacing: -0.5px;
+          display: flex;
+          flex-direction: column;
+          line-height: 1.1;
+        }
 
-        /* Makes the dark JPEG look like a premium badge */
-        .navbar-logo-img {
-          height: 48px;
-          width: auto;
-          object-fit: contain;
-          border-radius: 8px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        .logo-subtext {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         nav {
@@ -132,6 +154,12 @@ export default function GDGLandingPage() {
           align-items: center;
           gap: 2rem;
         }
+        
+        .header-socials-wrapper {
+          display: flex;
+          gap: 15px;
+        }
+
         nav a {
           text-decoration: none;
           color: var(--text-primary);
@@ -147,8 +175,9 @@ export default function GDGLandingPage() {
           display: flex;
           min-height: 100vh;
           padding: 8rem 6% 4rem;
-          gap: 10rem;
+          gap: 5rem;
           align-items: center;
+          justify-content: space-between;
         }
         .main-heading {
           font-family: "Poppins", sans-serif;
@@ -396,26 +425,44 @@ export default function GDGLandingPage() {
           display: grid;
           grid-template-columns: 1.5fr 1fr 1fr;
           align-items: center;
-          gap: 2rem;
+          gap: 3rem;
         }
         
-        .footer-logo-container {
+        .footer-logo-box {
           display: flex;
           align-items: center;
-          justify-content: center;
-          /* Magic trick 2: Match the background of the JPEG so it blends invisibly */
-          background: #000000; 
-          padding: 12px;
-          border-radius: 12px;
+          gap: 20px;
+          background: #ffffff;
+          padding: 20px 30px;
+          border-radius: 16px;
           width: fit-content;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
 
-        .footer-logo-img {
-          height: 55px;
-          width: auto;
-          object-fit: contain;
-          border-radius: 4px; /* subtle inner radius */
+        .footer-text-group {
+          display: flex;
+          flex-direction: column;
+          color: #202124;
+          text-align: left;
+        }
+
+        .footer-on-campus {
+          font-weight: 800;
+          font-size: 1.2rem;
+          letter-spacing: 0.5px;
+          color: #3c4043;
+          margin-bottom: 2px;
+        }
+        
+        .footer-college-name {
+          font-family: "Inter", sans-serif;
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: #5f6368;
+          line-height: 1.4;
+          /* Fixed the squishing text issue here */
+          min-width: 250px; 
+          max-width: 300px;
         }
 
         .footer-center {
@@ -513,8 +560,16 @@ export default function GDGLandingPage() {
             text-align: center;
             gap: 2.5rem;
           }
-          .footer-logo-container {
+          .footer-logo-box {
             margin: 0 auto;
+            flex-direction: column;
+            text-align: center;
+          }
+          .footer-text-group {
+            text-align: center;
+          }
+          .footer-college-name {
+            min-width: auto;
           }
           .social-links {
             justify-content: center;
@@ -534,40 +589,32 @@ export default function GDGLandingPage() {
             padding: 1rem;
             text-align: center;
           }
+          .logo-text span { display: none; } /* Optional: hides long text on very small screens */
         }
       `}</style>
 
       <div className="app-container">
         <header className="navbar">
-          {/* Changed: Removed the redundant "GDG SKNCOE" text because your logo banner already says it! */}
-          <Link href="/" className="logo">
-            <img 
-              src="/assests/logo1.jpeg" 
-              alt="GDG Logo Banner" 
-              className="navbar-logo-img"
-            />
+          <Link href="/" className="logo-container">
+            <GDGLogo size={40} />
+            <div className="logo-text">
+              GDG SKNCOE
+              <span className="logo-subtext">On Campus</span>
+            </div>
           </Link>
           
           <nav>
-            <div className="header-socials-wrapper hidden md:block">
-              <div
-                className="social-links"
-                style={{ justifyContent: "center", gap: "10px" }}>
-                <a
-                  href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
-                  aria-label="Instagram">
-                  <FaInstagram size={18} />
-                </a>
-                <a
-                  href="https://www.linkedin.com/company/gdgoncampus/"
-                  aria-label="LinkedIn">
-                  <FaLinkedin size={18} />
-                </a>
-              </div>
+            <div className="header-socials-wrapper hidden md:flex">
+              <a href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag==" aria-label="Instagram">
+                <FaInstagram size={22} className="text-gray-700 hover:text-blue-600 transition-colors" />
+              </a>
+              <a href="https://www.linkedin.com/company/gdgoncampus/" aria-label="LinkedIn">
+                <FaLinkedin size={22} className="text-gray-700 hover:text-blue-600 transition-colors" />
+              </a>
             </div>
             <Link
               href="/admin"
-              className="text-sm font-semibold text-gray-600 hover:text-blue-600"
+              className="text-sm font-semibold text-gray-700 hover:text-blue-600"
               style={{ textDecoration: "none" }}>
               Admin Portal
             </Link>
@@ -605,8 +652,7 @@ export default function GDGLandingPage() {
               <div className="quiz-phone-mockup">
                 <div className="phone-screen">
                   <div className="quiz-header">
-                    <div
-                      className={`score-badge ${quizState >= 3 ? "show" : ""}`}>
+                    <div className={`score-badge ${quizState >= 3 ? "show" : ""}`}>
                       🎯 Score: 100
                     </div>
                     <div style={{ fontSize: "0.8rem", opacity: 0.8, fontFamily: "Inter" }}>
@@ -617,12 +663,7 @@ export default function GDGLandingPage() {
                     </div>
                   </div>
                   <div style={{ padding: "20px 0", fontFamily: "Inter" }}>
-                    {[
-                      "Google Developer Group",
-                      "Global Design Guild",
-                      "Game Dev Group",
-                      "General Data Gateway",
-                    ].map((opt, i) => (
+                    {["Google Developer Group", "Global Design Guild", "Game Dev Group", "General Data Gateway"].map((opt, i) => (
                       <div
                         key={opt}
                         className={`quiz-option 
@@ -633,8 +674,7 @@ export default function GDGLandingPage() {
                       </div>
                     ))}
                   </div>
-                  <div
-                    className={`celebration-overlay ${quizState === 4 ? "active" : ""}`}>
+                  <div className={`celebration-overlay ${quizState === 4 ? "active" : ""}`}>
                     <span className="trophy">🏆</span>
                     {[...Array(12)].map((_, i) => (
                       <div
@@ -644,12 +684,7 @@ export default function GDGLandingPage() {
                           "--x": `${(Math.random() - 0.5) * 200}px`,
                           "--y": `${(Math.random() - 0.5) * 200}px`,
                           "--r": `${Math.random() * 360}deg`,
-                          backgroundColor: [
-                            "#4285F4",
-                            "#EA4335",
-                            "#FBBC05",
-                            "#34A853",
-                          ][i % 4],
+                          backgroundColor: ["#4285F4", "#EA4335", "#FBBC05", "#34A853"][i % 4],
                         }}
                       />
                     ))}
@@ -665,44 +700,24 @@ export default function GDGLandingPage() {
             </h2>
             <div className="timeline">
               <div className="timeline-line">
-                <div
-                  className="timeline-progress"
-                  style={{ width: `${(visibleSteps / 4) * 100}%` }}></div>
+                <div className="timeline-progress" style={{ width: `${(visibleSteps / 4) * 100}%` }}></div>
               </div>
 
-              {["Join Event", "Think & Answer", "Compete", "Win Rewards"].map(
-                (step, i) => (
-                  <div
-                    key={step}
-                    className={`timeline-item ${visibleSteps > i ? "visible" : ""}`}>
-                    <div
-                      className={`timeline-node ${visibleSteps > i ? "active-node" : ""}`}></div>
-                    <div className="process-card">
-                      <div
-                        style={{
-                          color: "var(--google-blue)",
-                          fontWeight: 800,
-                          fontFamily: "Poppins",
-                          fontSize: "1.2rem",
-                          marginBottom: "0.5rem"
-                        }}>
-                        0{i + 1}
-                      </div>
-                      <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)" }}>{step}</h3>
+              {["Join Event", "Think & Answer", "Compete", "Win Rewards"].map((step, i) => (
+                <div key={step} className={`timeline-item ${visibleSteps > i ? "visible" : ""}`}>
+                  <div className={`timeline-node ${visibleSteps > i ? "active-node" : ""}`}></div>
+                  <div className="process-card">
+                    <div style={{ color: "var(--google-blue)", fontWeight: 800, fontFamily: "Poppins", fontSize: "1.2rem", marginBottom: "0.5rem" }}>
+                      0{i + 1}
                     </div>
+                    <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)" }}>{step}</h3>
                   </div>
-                ),
-              )}
+                </div>
+              ))}
             </div>
 
             <Link href="/user" style={{ textDecoration: "none" }}>
-              <button
-                className="hero-btn"
-                style={{
-                  marginTop: "4rem",
-                  padding: "1.2rem 3rem",
-                  fontSize: "1.1rem",
-                }}>
+              <button className="hero-btn" style={{ marginTop: "4rem", padding: "1.2rem 3rem", fontSize: "1.1rem" }}>
                 Join Room Now
               </button>
             </Link>
@@ -712,13 +727,14 @@ export default function GDGLandingPage() {
         <footer className="footer">
           <div className="footer-container">
             <div className="footer-section footer-brand">
-              {/* Changed: Removed redundant HTML text and changed container to black */}
-              <div className="footer-logo-container">
-                <img
-                  src="/assests/logo1.jpeg"
-                  alt="GDG Logo Banner"
-                  className="footer-logo-img"
-                />
+              <div className="footer-logo-box">
+                <GDGLogo size={50} />
+                <div className="footer-text-group">
+                  <span className="footer-on-campus">ON CAMPUS</span>
+                  <span className="footer-college-name">
+                    Smt. Kashibai Navale College of Engineering
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -731,14 +747,10 @@ export default function GDGLandingPage() {
 
             <div className="footer-section footer-socials-wrapper">
               <div className="social-links">
-                <a
-                  href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
-                  aria-label="Instagram">
+                <a href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag==" aria-label="Instagram">
                   <FaInstagram size={20} />
                 </a>
-                <a
-                  href="https://www.linkedin.com/company/gdgoncampus/"
-                  aria-label="LinkedIn">
+                <a href="https://www.linkedin.com/company/gdgoncampus/" aria-label="LinkedIn">
                   <FaLinkedin size={20} />
                 </a>
                 <a href="#" aria-label="GitHub">
