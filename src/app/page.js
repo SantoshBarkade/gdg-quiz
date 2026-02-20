@@ -919,4 +919,5 @@ export default function GDGLandingPage() {
       </div>
     </div>
   );
+  
 }
