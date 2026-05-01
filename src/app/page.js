@@ -659,7 +659,7 @@ export default function QubitLandingPage() {
             <QuizSparkLogo size={42} />
             <div className="logo-text">
               Qubit
-              <span className="logo-subtext">On Campus</span>
+              <span className="logo-subtext">Play • Learn • Compete</span>
             </div>
           </Link>
 
@@ -874,7 +874,7 @@ export default function QubitLandingPage() {
               <div className="footer-logo-box">
                 <QuizSparkLogo size={56} />
                 <div className="footer-text-group">
-                  <span className="footer-on-campus">ON CAMPUS</span>
+                  <span className="footer-on-campus">Qubit</span>
                   <span className="footer-college-name">
                     Smt. Kashibai Navale College of Engineering
                   </span>
@@ -883,7 +883,7 @@ export default function QubitLandingPage() {
             </div>
 
             <div className="footer-section footer-center">
-              <p className="copyright">© 2024 All Rights Reserved</p>
+              <p className="copyright">© 2026 All Rights Reserved</p>
               <a href="mailto:contact@qubit.com" className="email-pill">
                 <FaEnvelope /> contact@qubit.com
               </a>
