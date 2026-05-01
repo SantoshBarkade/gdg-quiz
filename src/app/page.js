@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import Head from "next/head";
 import Link from "next/link";
 import { FaInstagram, FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 
@@ -30,11 +29,16 @@ const QuizSparkLogo = ({ size = 48, className = "" }) => (
   </svg>
 );
 
-export default function GDGLandingPage() {
+export default function QubitLandingPage() {
   const [quizState, setQuizState] = useState(0);
   const [visibleSteps, setVisibleSteps] = useState(0);
 
   const processRef = useRef(null);
+
+  // Set browser tab title
+  useEffect(() => {
+    document.title = "Qubit";
+  }, []);
 
   // --- Quiz Animation Loop ---
   useEffect(() => {
@@ -74,15 +78,6 @@ export default function GDGLandingPage() {
 
   return (
     <div className="light">
-      <Head>
-        <title>GDG SKNCOE</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;800&display=swap"
-          rel="stylesheet"
-        />
-      </Head>
-
       <style jsx global>{`
         :root {
           --bg-primary: #ffffff;
@@ -198,7 +193,7 @@ export default function GDGLandingPage() {
           font-size: 0.95rem;
           transition: color 0.3s;
         }
-        
+
         .admin-link:hover {
           color: var(--google-blue);
         }
@@ -663,13 +658,12 @@ export default function GDGLandingPage() {
           <Link href="/" className="logo-container">
             <QuizSparkLogo size={42} />
             <div className="logo-text">
-              GDG SKNCOE
+              Qubit
               <span className="logo-subtext">On Campus</span>
             </div>
           </Link>
 
           <nav className="nav-right-section">
-            {/* Added custom CSS classes to ensure these always display correctly */}
             <div className="header-socials-wrapper">
               <a
                 href="https://www.instagram.com/gdg_skncoe?igsh=MWNrcmlha2NzejJmag=="
@@ -685,15 +679,15 @@ export default function GDGLandingPage() {
               >
                 <FaLinkedin size={22} />
               </a>
-              <a 
-                href="#" 
-                aria-label="GitHub" 
+              <a
+                href="#"
+                aria-label="GitHub"
                 className="header-social-icon"
               >
                 <FaGithub size={22} />
               </a>
             </div>
-            
+
             <Link href="/admin" className="admin-link">
               Admin Portal
             </Link>
@@ -752,15 +746,15 @@ export default function GDGLandingPage() {
                         fontFamily: "Inter",
                       }}
                     >
-                      What does GDG stand for?
+                      What does Qubit stand for?
                     </div>
                   </div>
                   <div style={{ padding: "20px 0", fontFamily: "Inter" }}>
                     {[
-                      "Google Developer Group",
-                      "Global Design Guild",
-                      "Game Dev Group",
-                      "General Data Gateway",
+                      "Quantum bit",
+                      "Quick unit bit",
+                      "Query binary",
+                      "General unit token",
                     ].map((opt, i) => (
                       <div
                         key={opt}
@@ -890,8 +884,8 @@ export default function GDGLandingPage() {
 
             <div className="footer-section footer-center">
               <p className="copyright">© 2024 All Rights Reserved</p>
-              <a href="mailto:contact@gdgskncoe.com" className="email-pill">
-                <FaEnvelope /> contact@gdgskncoe.com
+              <a href="mailto:contact@qubit.com" className="email-pill">
+                <FaEnvelope /> contact@qubit.com
               </a>
             </div>
 
@@ -919,5 +913,4 @@ export default function GDGLandingPage() {
       </div>
     </div>
   );
-  
 }
